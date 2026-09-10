@@ -12,6 +12,7 @@ import {
   Laptop, Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 
 const perks = [
   { icon: Globe, title: "Remote-First Work", desc: "Flexibility to work from anywhere in the world with flexible hours.", color: "text-blue-500", bg: "bg-blue-50 border-blue-100" },
@@ -77,7 +78,10 @@ const Career = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <AnimatedNavbar />
+
+      <AnimatedNavbar />
+
       <PageBanner
         title="Join Our Team & Build The Future"
         subtitle="Explore exciting career opportunities at Dharam Vir Infotech. Innovate, grow, and work on high-impact global projects."
@@ -346,8 +350,8 @@ const Career = () => {
 
                         <div className="grid md:grid-cols-2 gap-4">
                           {[{ label: "Full Name *", key: "fullName", type: "text", placeholder: "e.g. Rahul Sharma" },
-                            { label: "Email Address *", key: "email", type: "email", placeholder: "e.g. rahul@example.com" },
-                            { label: "Phone Number *", key: "phone", type: "tel", placeholder: "+91 98765 43210" }].map(field => (
+                          { label: "Email Address *", key: "email", type: "email", placeholder: "e.g. rahul@example.com" },
+                          { label: "Phone Number *", key: "phone", type: "tel", placeholder: "+91 98765 43210" }].map(field => (
                             <div key={field.key}>
                               <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">{field.label}</label>
                               <input type={field.type} required={field.label.includes("*")} placeholder={field.placeholder}

@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Globe, title: "Scalable Storage", desc: "Horizontal and vertical scaling for growing data needs." },
 ];
 const DatabaseStorage = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="Database & Storage" subtitle="Reliable, scalable, and secure data storage solutions for modern applications" breadcrumb="Technologies / Database"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">

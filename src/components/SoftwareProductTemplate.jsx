@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Head from "next/head";
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import Footer from "@/components/Footer";
 import Seo from "@/components/Seo";
 import { Link } from "@/lib/router-compat";
@@ -67,7 +67,7 @@ const SoftwareProductTemplate = ({ data }) => {
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
         </Head>
-        <Navbar />
+        <AnimatedNavbar />
 
         {/* HERO */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-[#0a1530] text-primary-foreground">

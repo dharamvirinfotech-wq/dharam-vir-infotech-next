@@ -1,10 +1,11 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 const TermsConditions = () => {
-    return (<div className="min-h-screen bg-background">
-      <Navbar />
-      <PageBanner title="Terms & Conditions" subtitle="Please read these terms and conditions carefully before using Dharam Vir Infotech services." breadcrumb="Terms & Conditions"/>
+  return (
+    <div className="min-h-screen bg-backgrounds bg-gradient-to-br from-[#f6f9fc] via-[#edf2f8] to-[#f8fafc] ">
+      <AnimatedNavbar />
+      <PageBanner title="Terms & Conditions" subtitle="Please read these terms and conditions carefully before using Dharam Vir Infotech services." breadcrumb="Terms & Conditions" />
 
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert">

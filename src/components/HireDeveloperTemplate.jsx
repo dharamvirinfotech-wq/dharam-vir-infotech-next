@@ -1,5 +1,5 @@
 import { Link } from "@/lib/router-compat";
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import { CheckCircle, Clock, DollarSign, Shield, Users, Zap, Star, MapPin, Briefcase } from "lucide-react";
@@ -29,7 +29,7 @@ const HireDeveloperTemplate = ({ title, subtitle, breadcrumb, description, skill
     const roleLabel = title.replace("Hire ", "");
     const devProfiles = developers || generateDefaultDevelopers(roleLabel);
     return (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title={title} subtitle={subtitle} breadcrumb={breadcrumb}/>
 
     {/* Overview */}

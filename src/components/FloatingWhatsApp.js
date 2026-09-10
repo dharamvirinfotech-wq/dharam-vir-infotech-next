@@ -23,7 +23,7 @@ const FloatingWhatsApp = () => {
         .floating-whatsapp {
           position: fixed;
           bottom: 90px; /* increased from 25px to 90px to avoid overlap */
-          right: 16px;
+          right: 20px;
           z-index: 9999;
           cursor: pointer;
           background-color: #25d366;

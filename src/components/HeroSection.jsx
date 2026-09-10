@@ -179,18 +179,17 @@ const HeroSection = () => {
           <button
             key={`dot-${s.id}`}
             onClick={() => setCurrent(idx)}
-            className={`transition-all duration-500 rounded-full ${
-              idx === current
-                ? "w-4 h-4 bg-accent border-2 border-white scale-110 shadow-lg shadow-accent/50"
-                : "w-2.5 h-2.5 bg-white/40 hover:bg-white/70 border border-white/30"
-            }`}
+            className={`transition-all duration-500 rounded-full ${idx === current
+              ? "w-4 h-4 bg-accent border-2 border-white scale-110 shadow-lg shadow-accent/50"
+              : "w-2.5 h-2.5 bg-white/40 hover:bg-white/70 border border-white/30"
+              }`}
             aria-label={`Go to slide ${idx + 1}`}
           />
         ))}
       </div>
 
       {/* Arrow Controls */}
-      <button
+      {/* <button
         onClick={prevSlide}
         className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/70 border border-white/15 text-white hover:bg-accent hover:text-accent-foreground transition-all flex items-center justify-center backdrop-blur-md"
         aria-label="Previous Slide"
@@ -203,13 +202,13 @@ const HeroSection = () => {
         aria-label="Next Slide"
       >
         <ChevronRight size={20} />
-      </button>
+      </button> */}
 
       {/* Right Side Floating Social Sidebar */}
-      <div className="absolute right-14 sm:right-16 md:right-20 top-1/2 -translate-y-1/2 z-30 hidden sm:flex flex-col items-center gap-5">
-        <span className="writing-vertical text-[10px] uppercase font-mono tracking-widest text-slate-300 select-none pb-2">
-          CONNECT WITH US
-        </span>
+      <div className="absolute right-10 top-1/2 -translate-y-1/2 z-30 hidden sm:flex flex-col items-center gap-5">
+        {/* <span className="writing-vertical text-[10px] uppercase font-mono tracking-widest text-slate-300 select-none pb-2">
+          CONNECT
+        </span> */}
         <div className="w-[1px] h-8 bg-white/20" />
         <div className="flex flex-col gap-3">
           <a

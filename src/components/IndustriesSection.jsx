@@ -28,7 +28,7 @@ const cardVariants = {
 
 const IndustriesSection = ({ items = homeIndustriesData }) => {
   return (
-    <section id="industries" className="py-10 sm:py-12 md:py-14 bg-background relative overflow-hidden select-none">
+    <section id="industries" className="py-10 sm:py-12 md:py-14 bg-backgrounds relative overflow-hidden select-none">
       {/* Background Subtle Ambience */}
       <div className="absolute top-1/3 right-1/4 w-[500px] h-[300px] bg-accent/5 rounded-full blur-[140px] pointer-events-none -z-10" />
 

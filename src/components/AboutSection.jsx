@@ -26,7 +26,7 @@ const AboutSection = ({
   highlights = homeAboutHighlights,
 }) => {
   return (
-    <section id="about" className="py-10 sm:py-12 md:py-14 bg-background relative overflow-hidden">
+    <section id="about" className="py-10 sm:py-12 md:py-14 bg-backgrounds relative overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column: Text Content */}
@@ -60,24 +60,24 @@ const AboutSection = ({
               ))}
             </div>
 
-            <div className="pt-4 flex flex-wrap gap-4">
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <div className="pt-4 flex flex-wrap items-center gap-3.5">
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Link
                   to="/about"
-                  className="bg-accent text-accent-foreground px-7 py-3.5 rounded-xl font-semibold hover:bg-primary hover:text-white transition-all inline-flex items-center gap-2 shadow-md shadow-accent/10"
+                  className="bg-accent hover:bg-primary text-white font-bold px-7 sm:px-8 py-3.5 rounded-full text-sm sm:text-base transition-all duration-300 inline-flex items-center gap-2.5 shadow-xl hover:shadow-accent/20 group"
                 >
                   <span>Learn More About Us</span>
-                  <ArrowRight size={16} />
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </motion.div>
 
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Link
                   to="/mission-vision"
-                  className="border border-border text-foreground px-7 py-3.5 rounded-xl font-semibold hover:bg-muted transition-all inline-flex items-center gap-2"
+                  className="border border-border bg-card hover:bg-muted text-foreground font-semibold px-7 sm:px-8 py-3.5 rounded-full text-sm sm:text-base transition-all duration-300 inline-flex items-center gap-2.5 shadow-sm"
                 >
                   <span>Mission & Vision</span>
-                  <ArrowRight size={16} />
+                  <ArrowRight size={18} />
                 </Link>
               </motion.div>
             </div>

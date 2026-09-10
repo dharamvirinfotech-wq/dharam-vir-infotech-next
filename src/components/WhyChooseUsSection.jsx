@@ -23,7 +23,7 @@ const cardVariants = {
 
 const WhyChooseUsSection = ({ items = homeWhyChooseUsData }) => {
   return (
-    <section id="why-choose-us" className="py-10 sm:py-12 md:py-14 bg-background relative overflow-hidden select-none">
+    <section id="why-choose-us" className="py-10 sm:py-12 md:py-14 bg-backgrounds relative overflow-hidden select-none">
       {/* Subtle Background Lighting */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-accent/5 rounded-full blur-[140px] pointer-events-none -z-10" />
 

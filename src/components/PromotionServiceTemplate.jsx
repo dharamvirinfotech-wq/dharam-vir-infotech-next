@@ -1,11 +1,11 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import { Link } from "@/lib/router-compat";
 import { CheckCircle, ArrowRight } from "lucide-react";
 const PromotionServiceTemplate = ({ title, subtitle, breadcrumb, features, benefits, process }) => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title={title} subtitle={subtitle} breadcrumb={breadcrumb}/>
 
     {/* Features */}

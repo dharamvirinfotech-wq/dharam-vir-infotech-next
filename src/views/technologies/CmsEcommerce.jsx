@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Globe, title: "Multi-channel Commerce", desc: "Sell across web, mobile, social media, and marketplaces." },
 ];
 const CmsEcommerce = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="CMS & E-commerce" subtitle="Powerful content management and online commerce solutions for your business" breadcrumb="Technologies / CMS & E-commerce"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">

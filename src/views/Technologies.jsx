@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
@@ -127,8 +127,8 @@ const cardVariants = {
 
 const Technologies = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="min-h-screen bg-backgrounds bg-gradient-to-br from-[#f6f9fc] via-[#edf2f8] to-[#f8fafc] ">
+      <AnimatedNavbar />
       <PageBanner
         title="Technologies We Master"
         subtitle="Leveraging cutting-edge technologies to build future-proof, scalable, and high-performance digital solutions."

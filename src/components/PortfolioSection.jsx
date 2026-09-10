@@ -23,7 +23,7 @@ const itemVariants = {
 
 const PortfolioSection = ({ items = homeFeaturedProjects }) => {
   return (
-    <section id="portfolio" className="py-10 sm:py-12 md:py-14 bg-background relative overflow-hidden">
+    <section id="portfolio" className="py-10 sm:py-12 md:py-14 bg-backgrounds relative overflow-hidden">
       {/* Background Decorative Gradient Light */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[140px] pointer-events-none -z-10" />
 

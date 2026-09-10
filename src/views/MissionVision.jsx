@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import SectionHeader from "@/components/SectionHeader";
 import FaqSection from "@/components/FaqSection";
@@ -40,8 +40,8 @@ const MissionVision = () => {
   const { header, mission, vision, coreValues, pillars, faqs } = missionVisionData;
 
   return (
-    <div className="min-h-screen bg-background select-none">
-      <Navbar />
+    <div className="min-h-screen bg-backgrounds bg-gradient-to-br from-[#f6f9fc] via-[#edf2f8] to-[#f8fafc] select-none">
+      <AnimatedNavbar />
 
       {/* Hero / Page Banner */}
       <PageBanner

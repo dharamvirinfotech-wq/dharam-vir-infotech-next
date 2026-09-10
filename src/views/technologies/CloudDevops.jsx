@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Code2, title: "Monitoring & Logging", desc: "Real-time monitoring, alerting, and centralized log management." },
 ];
 const CloudDevops = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="Cloud & DevOps" subtitle="Accelerate delivery with modern cloud infrastructure and DevOps practices" breadcrumb="Technologies / Cloud & DevOps"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">

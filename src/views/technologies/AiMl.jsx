@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Code2, title: "MLOps", desc: "End-to-end ML pipeline management, monitoring, and deployment." },
 ];
 const AiMl = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="AI & Machine Learning" subtitle="Harness the power of artificial intelligence to transform your business" breadcrumb="Technologies / AI & ML"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">

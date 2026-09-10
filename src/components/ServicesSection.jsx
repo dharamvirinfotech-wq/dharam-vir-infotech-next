@@ -43,7 +43,7 @@ const ServicesSection = ({ services = homeServicesData }) => {
   const [activeCard, setActiveCard] = useState(0);
 
   return (
-    <section id="services" className="py-12 sm:py-16 bg-background relative overflow-hidden">
+    <section id="services" className="py-12 sm:py-16 bg-backgrounds relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* Left Column: 6 Cards Grid (7 cols on desktop) */}
@@ -63,11 +63,10 @@ const ServicesSection = ({ services = homeServicesData }) => {
                   variants={cardVariants}
                   whileHover={{ y: -6, transition: { duration: 0.25 } }}
                   onMouseEnter={() => setActiveCard(idx)}
-                  className={`group relative bg-background border rounded-2xl p-5 md:p-6 transition-all duration-300 flex flex-col justify-between cursor-pointer ${
-                    isActive
+                  className={`group relative bg-background border rounded-2xl p-5 md:p-6 transition-all duration-300 flex flex-col justify-between cursor-pointer ${isActive
                       ? "border-accent/60 shadow-xl shadow-accent/5 ring-1 ring-accent/30"
                       : "border-border/80 hover:border-accent/40 hover:shadow-md"
-                  }`}
+                    }`}
                 >
                   {/* Badge if available */}
                   {service.badge && (
@@ -79,11 +78,10 @@ const ServicesSection = ({ services = homeServicesData }) => {
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                          isActive
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive
                             ? "bg-accent text-white"
                             : "bg-muted text-primary group-hover:bg-accent/10 group-hover:text-accent"
-                        }`}
+                          }`}
                       >
                         <Icon size={20} />
                       </div>

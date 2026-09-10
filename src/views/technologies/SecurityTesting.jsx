@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Server, title: "DevSecOps", desc: "Security integrated into every stage of the development lifecycle." },
 ];
 const SecurityTesting = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="Security & Testing" subtitle="Ensuring your applications are secure, reliable, and production-ready" breadcrumb="Technologies / Security & Testing"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">

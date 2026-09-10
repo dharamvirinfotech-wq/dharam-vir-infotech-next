@@ -26,7 +26,7 @@ const cardVariants = {
 
 const AiSolutionsSection = ({ items = homeAiSolutionsData }) => {
   return (
-    <section id="ai-solutions" className="py-10 sm:py-12 md:py-14 bg-background relative overflow-hidden select-none">
+    <section id="ai-solutions" className="py-10 sm:py-12 md:py-14 bg-backgrounds relative overflow-hidden select-none">
       {/* Ambient Neural Network Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-accent/5 rounded-full blur-[160px] pointer-events-none -z-10" />
 

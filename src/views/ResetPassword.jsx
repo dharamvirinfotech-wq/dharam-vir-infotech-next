@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "@/lib/router-compat";
 import { Eye, EyeOff, Lock, Loader2, ShieldCheck } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,7 @@ const ResetPassword = () => {
         }
     };
     return (<div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      <AnimatedNavbar />
       <div className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl shadow-xl border border-border p-8">

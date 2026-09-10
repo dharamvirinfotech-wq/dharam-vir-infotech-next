@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Code2, title: "App Store Ready", desc: "Optimized for Apple App Store and Google Play Store guidelines." },
 ];
 const Mobile = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="Mobile Technologies" subtitle="Building native and cross-platform mobile experiences that users love" breadcrumb="Technologies / Mobile"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">

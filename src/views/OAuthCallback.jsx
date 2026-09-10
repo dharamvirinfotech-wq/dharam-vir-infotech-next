@@ -51,19 +51,20 @@ const OAuthCallback = () => {
             navigate("/login", { replace: true });
         }
     }, [token, userRaw, error, navigate, dispatch, toast]);
+
     return (<div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="bg-card border border-border rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-        {error ? (<>
-            <AlertTriangle className="text-destructive mx-auto mb-4" size={32}/>
-            <h1 className="text-xl font-bold text-primary">Sign-in failed</h1>
-            <p className="text-muted-foreground text-sm mt-2">{error}</p>
-            <Button className="mt-6" onClick={() => navigate("/login")}>Back to Login</Button>
-          </>) : (<>
-            <Loader2 className="text-accent mx-auto mb-4 animate-spin" size={32}/>
-            <h1 className="text-xl font-bold text-primary">Signing you in…</h1>
-            <p className="text-muted-foreground text-sm mt-2">Completing authentication, please wait.</p>
-          </>)}
-      </div>
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+            {error ? (<>
+                <AlertTriangle className="text-destructive mx-auto mb-4" size={32} />
+                <h1 className="text-xl font-bold text-primary">Sign-in failed</h1>
+                <p className="text-muted-foreground text-sm mt-2">{error}</p>
+                <Button className="mt-6" onClick={() => navigate("/login")}>Back to Login</Button>
+            </>) : (<>
+                <Loader2 className="text-accent mx-auto mb-4 animate-spin" size={32} />
+                <h1 className="text-xl font-bold text-primary">Signing you in…</h1>
+                <p className="text-muted-foreground text-sm mt-2">Completing authentication, please wait.</p>
+            </>)}
+        </div>
     </div>);
 };
 export default OAuthCallback;

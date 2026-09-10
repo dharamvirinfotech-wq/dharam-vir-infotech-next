@@ -4,11 +4,14 @@ import FaqSection from "@/components/FaqSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { homeFaqData } from "@/data/home-data";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 
 const Faq = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="min-h-screen bg-backgrounds bg-gradient-to-br from-[#f6f9fc] via-[#edf2f8] to-[#f8fafc] ">
+      <AnimatedNavbar />
+      <AnimatedNavbar />
+
       <PageBanner
         title="Frequently Asked Questions"
         subtitle="Got questions? We have answers. Explore commonly asked questions about our services, process, and hiring models."

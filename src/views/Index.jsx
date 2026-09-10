@@ -1,5 +1,11 @@
-import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
+// Original Components (commented as requested for easy rollback)
+// import Navbar from "@/components/Navbar";
+// import HeroSection from "@/components/HeroSection";
+
+// New Animated Components (matching provided reference design)
+import AnimatedNavbar from "@/components/AnimatedNavbar";
+import AnimatedHeroSection from "@/components/AnimatedHeroSection";
+
 import AboutSection from "@/components/AboutSection";
 import StatsSection from "@/components/StatsSection";
 import ServicesSection from "@/components/ServicesSection";
@@ -17,10 +23,28 @@ import { homeFaqData } from "@/data/home-data";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <HeroSection />
+    <div className="min-h-screen bg-gradient-to-br from-[#f6f9fc] via-[#edf2f8] to-[#f8fafc]">
+      {/* 
+        Header with:
+        - Sticky transparent-to-solid white transition on scroll
+        - Desktop "CONTACT TODAY" button & 3-line Menu icon opening Desktop Info Sidebar
+        - Mobile hamburger with smooth drawer
+      */}
+      <AnimatedNavbar />
+
+      {/* 
+        Hero Section with:
+        - Floating animated geometric shapes (triangles, pluses, circles, organic waves)
+        - Split 2-column layout (Text on left, fluid masked visual on right)
+        - Full circle pill button ("CONTACT TODAY")
+        - Slower smooth slide transitions (7.5s)
+      */}
+      {/* <HeroSection /> */}
+      <AnimatedHeroSection />
+
+
       <StatsSection />
+
       <ServicesSection />
       <AboutSection />
       <WhyChooseUsSection />

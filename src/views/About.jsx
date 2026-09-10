@@ -8,10 +8,12 @@ import ProcessSection from "@/components/ProcessSection";
 import FaqSection from "@/components/FaqSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 const About = () => {
-    return (<div className="min-h-screen">
-      <Navbar />
-      <PageBanner title="About Us" subtitle="Your trusted technology partner for digital transformation" breadcrumb="About Us"/>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#f6f9fc] via-[#edf2f8] to-[#f8fafc]">
+      <AnimatedNavbar />
+      <PageBanner title="About Us" subtitle="Your trusted technology partner for digital transformation" breadcrumb="About Us" />
       <AboutSection />
       <StatsSection />
       <IndustriesSection />

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@/lib/router-compat";
 import { Mail, KeyRound, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ const ForgotPassword = () => {
         }
     };
     return (<div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      <AnimatedNavbar />
       <div className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl shadow-xl border border-border p-8">

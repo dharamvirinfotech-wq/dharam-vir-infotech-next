@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -20,7 +20,7 @@ const features = [
     { icon: Globe, title: "Progressive Web Apps", desc: "Offline-capable, installable web apps with native-like experience." },
 ];
 const Frontend = () => (<div className="min-h-screen bg-background">
-    <Navbar />
+    <AnimatedNavbar />
     <PageBanner title="Frontend Technologies" subtitle="Building stunning, high-performance user interfaces with modern frameworks" breadcrumb="Technologies / Frontend"/>
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">
