@@ -1,0 +1,1 @@
+import ProtectedRoute from '@/components/ProtectedRoute.jsx'; import Dashboard from '@/views/admin/Dashboard.jsx'; export default function AdminDashboardPage() { return <ProtectedRoute roles={["admin"]}><Dashboard /></ProtectedRoute>; }

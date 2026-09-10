@@ -1,0 +1,1 @@
+import ProtectedRoute from '@/components/ProtectedRoute.jsx'; import AdminRoles from '@/views/admin/Roles.jsx'; export default function AdminRolesPage() { return <ProtectedRoute roles={["admin"]}><AdminRoles /></ProtectedRoute>; }

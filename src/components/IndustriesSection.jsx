@@ -1,0 +1,100 @@
+import { motion } from "framer-motion";
+import SectionHeader from "@/components/SectionHeader";
+import { ArrowUpRight } from "lucide-react";
+import { Link } from "@/lib/router-compat";
+import { homeIndustriesData } from "@/data/home-data";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 25 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: "easeOut",
+    },
+  },
+};
+
+const IndustriesSection = ({ items = homeIndustriesData }) => {
+  return (
+    <section id="industries" className="py-10 sm:py-12 md:py-14 bg-background relative overflow-hidden select-none">
+      {/* Background Subtle Ambience */}
+      <div className="absolute top-1/3 right-1/4 w-[500px] h-[300px] bg-accent/5 rounded-full blur-[140px] pointer-events-none -z-10" />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <SectionHeader
+          badge="INDUSTRIES WE TRANSFORM"
+          titlePrefix="Domain-Specific Engineering For"
+          titleHighlight="High-Growth Sectors"
+          description="From high-performance native desktop tools to regulated FinTech systems, we build domain-specialized software tailored to unique compliance and operational demands."
+        />
+
+        {/* Responsive Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-7xl mx-auto"
+        >
+          {items.map((ind) => {
+            const Icon = ind.icon;
+            return (
+              <motion.div
+                key={ind.id}
+                variants={cardVariants}
+                className="group relative bg-card rounded-2xl p-6 sm:p-7 border border-border/80 hover:border-accent/40 transition-all duration-300 hover:shadow-lg hover:shadow-accent/5 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-4 mb-5">
+                    <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors duration-300">
+                      <Icon size={24} />
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold font-mono tracking-wide uppercase bg-secondary text-primary dark:text-slate-300 border border-border/60 group-hover:border-accent/30 group-hover:text-accent transition-colors">
+                      {ind.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-primary dark:text-white group-hover:text-accent transition-colors duration-300 mb-2.5">
+                    {ind.title}
+                  </h3>
+
+                  <p className="font-sans text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {ind.desc}
+                  </p>
+                </div>
+
+                <div className="pt-4 mt-5 border-t border-border/40 flex items-center justify-between">
+                  <Link
+                    to={ind.link}
+                    className="text-xs sm:text-sm font-semibold text-primary dark:text-slate-200 group-hover:text-accent flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Explore Solutions</span>
+                    <ArrowUpRight
+                      size={16}
+                      className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </Link>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default IndustriesSection;
