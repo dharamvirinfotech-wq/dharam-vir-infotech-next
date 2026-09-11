@@ -12,11 +12,16 @@ const swaggerSpec = require('./swagger');
 
 const authRoutes = require('./routes/auth.routes');
 const oauthRoutes = require('./routes/oauth.routes');
+const path = require('path');
 const userRoutes = require('./routes/user.routes');
 const contactRoutes = require('./routes/contact.routes');
 const expertRoutes = require('./routes/expert.routes');
-const hireRoutes = require('./routes/hire.routes');
 const developerRoutes = require('./routes/developer.routes');
+const emailRoutes = require('./routes/email.routes');
+const jobRoutes = require('./routes/job.routes');
+const visitorRoutes = require('./routes/visitor.routes');
+const notificationRoutes = require('./routes/notification.routes');
+const caseStudyRoutes = require('./routes/case-study.routes');
 const { notFound, errorHandler } = require('./middleware/error');
 const { testConnection } = require('./db/pool');
 const { configurePassport } = require('./auth/passport');
@@ -65,10 +70,15 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: t
 app.use('/api/auth', oauthRoutes);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/contact', contactRoutes);
 app.use('/api/experts', expertRoutes);
-app.use('/api/hire', hireRoutes);
 app.use('/api/developers', developerRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/analytics', visitorRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/case-studies', caseStudyRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

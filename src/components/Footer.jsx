@@ -15,7 +15,6 @@ const footerServices = [
 const footerLinks = [
   { label: "About Us", href: "/about" },
   { label: "Case Studies", href: "/portfolio" },
-  { label: "Technologies", href: "/technologies" },
   { label: "Career Openings", href: "/career" },
   { label: "Blog & Insights", href: "/blog" },
   { label: "Contact Us", href: "/contact" },

@@ -151,4 +151,19 @@ router.patch(
 );
 router.delete('/:id', requireAuth, requireRole('admin'), ctrl.remove);
 
+// Admin: Send custom email to client
+router.post(
+  '/send-custom-email',
+  requireAuth,
+  requireRole('admin', 'editor'),
+  [
+    body('recipient_email').optional().isEmail().normalizeEmail(),
+    body('to').optional().isEmail().normalizeEmail(),
+    body('subject').trim().isLength({ min: 1, max: 255 }).withMessage('Subject is required'),
+    body('message').trim().isLength({ min: 1, max: 10000 }).withMessage('Message is required'),
+  ],
+  validate,
+  ctrl.sendCustomEmail
+);
+
 module.exports = router;

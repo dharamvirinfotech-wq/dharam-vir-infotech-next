@@ -1,18 +1,19 @@
-import { useState } from "react";
-import Navbar from "@/components/Navbar";
+import { useState, useEffect, useMemo } from "react";
+import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
-import { jobPosts } from "@/data/careers";
+import { jobPosts as fallbackJobs } from "@/data/careers";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase, Users, Award, Zap, CheckCircle2, ArrowRight,
   Heart, Globe, Coffee, MapPin, Clock, DollarSign, Upload, X,
   Send, FileCheck, Building2, Sparkles, Star, TrendingUp,
-  Laptop, Shield,
+  Laptop, Shield, Search, RefreshCw, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import AnimatedNavbar from "@/components/AnimatedNavbar";
+import { jobsApi } from "@/lib/api";
+import { getOrSetVisitorId } from "@/lib/visitorTracker";
 
 const perks = [
   { icon: Globe, title: "Remote-First Work", desc: "Flexibility to work from anywhere in the world with flexible hours.", color: "text-blue-500", bg: "bg-blue-50 border-blue-100" },
@@ -40,46 +41,163 @@ const deptColors = {
   "Infrastructure": "bg-sky-100 text-sky-700 border-sky-200",
 };
 
+function normalizeList(val) {
+  if (Array.isArray(val)) return val;
+  if (!val) return [];
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (_) {}
+    return val.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 const Career = () => {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDept, setSelectedDept] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalTab, setModalTab] = useState("details");
   const [resumeFile, setResumeFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "", email: "", phone: "",
-    experience: "3-5 Years", expectedSalary: "",
-    portfolioUrl: "", coverLetter: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    experience: "3-5 Years",
+    expectedSalary: "",
+    portfolioUrl: "",
+    coverLetter: "",
   });
+
+  const fetchJobs = async () => {
+    setLoading(true);
+    try {
+      const res = await jobsApi.listPublic();
+      const rawList = res?.data || res?.jobs || [];
+      if (Array.isArray(rawList)) {
+        // Strictly filter to active/live jobs only
+        const liveJobs = rawList.filter(
+          (j) => !j.status || j.status === "active" || j.is_active === 1
+        );
+        setJobs(
+          liveJobs.map((j) => ({
+            ...j,
+            type: j.type || j.job_type || "Full-time",
+            skills: normalizeList(j.skills),
+            requirements: normalizeList(j.requirements),
+            responsibilities: normalizeList(j.responsibilities),
+          }))
+        );
+      } else {
+        setJobs([]);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch jobs from backend:", err);
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const departments = useMemo(() => {
+    const set = new Set();
+    jobs.forEach(j => { if (j.department) set.add(j.department); });
+    return ["All", ...Array.from(set)];
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const matchesDept = selectedDept === "All" || job.department === selectedDept;
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch = !q ||
+        job.title.toLowerCase().includes(q) ||
+        (job.department && job.department.toLowerCase().includes(q)) ||
+        (Array.isArray(job.skills) && job.skills.some(s => s.toLowerCase().includes(q))) ||
+        (job.location && job.location.toLowerCase().includes(q));
+      return matchesDept && matchesSearch;
+    });
+  }, [jobs, selectedDept, searchQuery]);
 
   const handleOpenModal = (job, initialTab = "details") => {
     setSelectedJob(job);
     setModalTab(initialTab);
     setSubmitted(false);
     setResumeFile(null);
+    setFormData({
+      fullName: "",
+      email: "",
+      phone: "",
+      experience: "3-5 Years",
+      expectedSalary: "",
+      portfolioUrl: "",
+      coverLetter: "",
+    });
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 10 * 1024 * 1024) { toast.error("File size must be under 10MB"); return; }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be under 10MB");
+        return;
+      }
       setResumeFile(file);
       toast.success(`Attached: ${file.name}`);
     }
   };
 
-  const handleSubmitApplication = (e) => {
+  const handleSubmitApplication = async (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.email || !formData.phone) { toast.error("Please fill in all required fields."); return; }
-    if (!resumeFile) { toast.error("Please upload your resume (PDF or DOCX)."); return; }
+    if (!formData.fullName || !formData.email || !formData.phone) {
+      toast.error("Please fill in all required fields (Name, Email, Phone).");
+      return;
+    }
+    if (!resumeFile) {
+      toast.error("Please upload your resume (PDF or DOCX).");
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => { setIsSubmitting(false); setSubmitted(true); toast.success(`Application submitted for ${selectedJob?.title}!`); }, 1200);
+    try {
+      const visitor_id = getOrSetVisitorId();
+      const data = new FormData();
+      data.append("fullName", formData.fullName.trim());
+      data.append("email", formData.email.trim());
+      data.append("phone", formData.phone.trim());
+      data.append("experience", formData.experience);
+      data.append("expectedSalary", formData.expectedSalary || "");
+      data.append("portfolioUrl", formData.portfolioUrl || "");
+      data.append("coverLetter", formData.coverLetter || "");
+      data.append("job_id", selectedJob?.id || "");
+      data.append("job_slug", selectedJob?.slug || "");
+      data.append("job_title", selectedJob?.title || "");
+      data.append("visitor_id", visitor_id || "");
+      data.append("resume", resumeFile);
+
+      await jobsApi.apply(data);
+
+      setIsSubmitting(false);
+      setSubmitted(true);
+      toast.success(`Application submitted! Welcome email sent to ${formData.email}.`);
+    } catch (err) {
+      setIsSubmitting(false);
+      const msg = err.response?.data?.message || err.message || "Failed to submit application. Please try again.";
+      toast.error(msg);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <AnimatedNavbar />
-
       <AnimatedNavbar />
 
       <PageBanner
@@ -89,7 +207,7 @@ const Career = () => {
       />
 
       {/* === Why Join Us / Perks === */}
-      <section className="py-16 md:py-20 relative overflow-hidden bg-slate-50/60">
+      <section className="py-16 md:py-20 relative overflow-hidden">
         <div className="absolute -top-20 left-1/3 w-[400px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div className="text-center max-w-2xl mx-auto mb-12"
@@ -163,7 +281,7 @@ const Career = () => {
       <section id="open-positions" className="py-16 md:py-20 relative">
         <div className="absolute bottom-0 right-0 w-[350px] h-[300px] bg-violet-500/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div className="text-center max-w-2xl mx-auto mb-12"
+          <motion.div className="text-center max-w-2xl mx-auto mb-10"
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20 mb-3">
               <Sparkles size={12} /> Current Openings
@@ -176,63 +294,121 @@ const Career = () => {
             </p>
           </motion.div>
 
-          <motion.div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6"
-            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09 } } }}>
-            {jobPosts.map((job) => (
-              <motion.div key={job.id}
-                variants={{ hidden: { opacity: 0, y: 25 }, visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } } }}
-                whileHover={{ y: -5 }}
-                className="bg-background border border-border/80 hover:border-accent/40 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 flex flex-col justify-between group">
-                <div>
-                  {/* Department badge + type */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${deptColors[job.department] || "bg-accent/10 text-accent border-accent/20"}`}>
-                      {job.department}
-                    </span>
-                    <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 flex-shrink-0">
-                      <Clock size={11} /> {job.type}
-                    </span>
-                  </div>
+          {/* Search & Filter Controls */}
+          <div className="max-w-4xl mx-auto mb-10 flex flex-col md:flex-row items-center gap-4">
+            <div className="relative w-full md:flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search jobs by title, skill, tech stack, or location..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 shadow-sm"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X size={15} />
+                </button>
+              )}
+            </div>
 
-                  <h3 className="font-display text-lg font-bold text-primary group-hover:text-accent transition-colors leading-snug mb-2">
-                    {job.title}
-                  </h3>
+            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+              {departments.map((dept) => (
+                <button
+                  key={dept}
+                  onClick={() => setSelectedDept(dept)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                    selectedDept === dept
+                      ? "bg-accent text-white shadow-sm shadow-accent/30"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {dept}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500 mb-3">
-                    <span className="flex items-center gap-1"><MapPin size={11} className="text-accent" /> {job.location}</span>
-                    <span className="flex items-center gap-1"><Briefcase size={11} className="text-accent" /> {job.experience} Exp</span>
-                    <span className="flex items-center gap-1"><DollarSign size={11} className="text-accent" /> {job.salary}</span>
-                  </div>
-
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">{job.description}</p>
-
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {job.skills.slice(0, 5).map((skill) => (
-                      <span key={skill} className="px-2.5 py-1 text-[10px] font-semibold bg-slate-100 text-slate-600 rounded-md border border-slate-200">
-                        {skill}
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-3">
+              <RefreshCw className="animate-spin text-accent" size={32} />
+              <p className="text-sm font-semibold text-slate-500">Loading open positions...</p>
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-slate-100 rounded-2xl max-w-lg mx-auto shadow-sm">
+              <AlertCircle size={40} className="text-slate-300 mx-auto mb-3" />
+              <h3 className="font-bold text-slate-800 text-base">No Positions Found</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                No active openings match your filter. Try adjusting your search query or department filter.
+              </p>
+              <button
+                onClick={() => { setSelectedDept("All"); setSearchQuery(""); }}
+                className="mt-4 text-xs font-bold text-accent hover:underline"
+              >
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            <motion.div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6"
+              initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}>
+              {filteredJobs.map((job) => (
+                <motion.div key={job.id}
+                  variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
+                  whileHover={{ y: -5 }}
+                  className="bg-white border border-slate-100 hover:border-accent/40 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 flex flex-col justify-between group">
+                  <div>
+                    {/* Department badge + type */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${deptColors[job.department] || "bg-accent/10 text-accent border-accent/20"}`}>
+                        {job.department}
                       </span>
-                    ))}
-                    {job.skills.length > 5 && (
-                      <span className="px-2.5 py-1 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-md border border-slate-200">
-                        +{job.skills.length - 5} more
+                      <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1 flex-shrink-0">
+                        <Clock size={11} /> {job.type}
                       </span>
+                    </div>
+
+                    <h3 className="font-display text-lg font-bold text-primary group-hover:text-accent transition-colors leading-snug mb-2">
+                      {job.title}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500 mb-3">
+                      <span className="flex items-center gap-1"><MapPin size={11} className="text-accent" /> {job.location}</span>
+                      <span className="flex items-center gap-1"><Briefcase size={11} className="text-accent" /> {job.experience}</span>
+                      {job.salary && <span className="flex items-center gap-1"><DollarSign size={11} className="text-accent" /> {job.salary}</span>}
+                    </div>
+
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">{job.description}</p>
+
+                    {Array.isArray(job.skills) && job.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {job.skills.slice(0, 5).map((skill) => (
+                          <span key={skill} className="px-2.5 py-1 text-[10px] font-semibold bg-slate-100 text-slate-600 rounded-md border border-slate-200">
+                            {skill}
+                          </span>
+                        ))}
+                        {job.skills.length > 5 && (
+                          <span className="px-2.5 py-1 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-md border border-slate-200">
+                            +{job.skills.length - 5} more
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
 
-                <div className="pt-3.5 border-t border-border/50 flex items-center gap-2.5">
-                  <button onClick={() => handleOpenModal(job, "details")}
-                    className="flex-1 text-xs font-semibold border border-border bg-muted/40 hover:bg-muted text-foreground py-2.5 px-3 rounded-xl transition-colors text-center">
-                    View Details
-                  </button>
-                  <button onClick={() => handleOpenModal(job, "apply")}
-                    className="flex-1 text-xs font-semibold bg-accent text-white hover:bg-primary py-2.5 px-3 rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md">
-                    Apply Now <ArrowRight size={13} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <div className="pt-3.5 border-t border-slate-100 flex items-center gap-2.5">
+                    <button onClick={() => handleOpenModal(job, "details")}
+                      className="flex-1 text-xs font-semibold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 py-2.5 px-3 rounded-xl transition-colors text-center">
+                      View Details
+                    </button>
+                    <button onClick={() => handleOpenModal(job, "apply")}
+                      className="flex-1 text-xs font-semibold bg-accent text-white hover:bg-primary py-2.5 px-3 rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md">
+                      Apply Now <ArrowRight size={13} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
@@ -241,36 +417,36 @@ const Career = () => {
         {selectedJob && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col custom-scrollbar my-auto"
+            <motion.div className="bg-white border border-slate-100 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col custom-scrollbar my-auto"
               initial={{ scale: 0.95, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.25, ease: "easeOut" }}>
 
               {/* Modal Header */}
-              <div className="p-5 md:p-6 border-b border-border flex items-start justify-between bg-muted/30 sticky top-0 bg-background/95 backdrop-blur z-10">
+              <div className="p-5 md:p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 sticky top-0 bg-white/95 backdrop-blur z-10">
                 <div>
                   <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${deptColors[selectedJob.department] || "bg-accent/10 text-accent border-accent/20"}`}>
                     {selectedJob.department}
                   </span>
                   <h3 className="font-display text-xl md:text-2xl font-bold text-primary mt-1.5">{selectedJob.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
+                  <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-3">
                     <span className="flex items-center gap-1"><MapPin size={11} className="text-accent" /> {selectedJob.location}</span>
                     <span className="flex items-center gap-1"><Clock size={11} className="text-accent" /> {selectedJob.type}</span>
                     <span className="flex items-center gap-1"><Briefcase size={11} className="text-accent" /> {selectedJob.experience}</span>
-                    <span className="flex items-center gap-1"><DollarSign size={11} className="text-accent" /> {selectedJob.salary}</span>
+                    {selectedJob.salary && <span className="flex items-center gap-1"><DollarSign size={11} className="text-accent" /> {selectedJob.salary}</span>}
                   </p>
                 </div>
-                <button onClick={() => setSelectedJob(null)} className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors flex-shrink-0" aria-label="Close dialog">
+                <button onClick={() => setSelectedJob(null)} className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors flex-shrink-0" aria-label="Close dialog">
                   <X size={20} />
                 </button>
               </div>
 
               {/* Modal Tabs */}
-              <div className="flex border-b border-border bg-muted/20 px-6">
+              <div className="flex border-b border-slate-100 bg-slate-50/50 px-6">
                 <button onClick={() => setModalTab("details")}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors ${modalTab === "details" ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors ${modalTab === "details" ? "border-accent text-accent" : "border-transparent text-slate-500 hover:text-slate-900"}`}>
                   Job Description & Requirements
                 </button>
                 <button onClick={() => setModalTab("apply")}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${modalTab === "apply" ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${modalTab === "apply" ? "border-accent text-accent" : "border-transparent text-slate-500 hover:text-slate-900"}`}>
                   Application Form <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                 </button>
               </div>
@@ -281,40 +457,50 @@ const Career = () => {
                   <div className="space-y-6">
                     <div>
                       <h4 className="font-display font-bold text-primary text-base mb-2">About The Role</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedJob.description}</p>
+                      <p className="text-sm text-slate-600 leading-relaxed">{selectedJob.description}</p>
                     </div>
-                    <div>
-                      <h4 className="font-display font-bold text-primary text-base mb-3">Key Responsibilities</h4>
-                      <ul className="space-y-2.5">
-                        {selectedJob.responsibilities.map((resp, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground/90">
-                            <CheckCircle2 size={16} className="text-accent flex-shrink-0 mt-0.5" />
-                            <span>{resp}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-display font-bold text-primary text-base mb-3">Requirements & Skills</h4>
-                      <ul className="space-y-2.5 mb-4">
-                        {selectedJob.requirements.map((req, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground/90">
-                            <CheckCircle2 size={16} className="text-accent flex-shrink-0 mt-0.5" />
-                            <span>{req}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-display font-bold text-primary text-xs uppercase tracking-wider mb-2">Required Tech Stack</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedJob.skills.map((skill) => (
-                          <span key={skill} className="px-3 py-1 text-xs font-semibold bg-accent/10 text-accent rounded-lg border border-accent/20">{skill}</span>
-                        ))}
+
+                    {Array.isArray(selectedJob.responsibilities) && selectedJob.responsibilities.length > 0 && (
+                      <div>
+                        <h4 className="font-display font-bold text-primary text-base mb-3">Key Responsibilities</h4>
+                        <ul className="space-y-2.5">
+                          {selectedJob.responsibilities.map((resp, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
+                              <CheckCircle2 size={16} className="text-accent flex-shrink-0 mt-0.5" />
+                              <span>{resp}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </div>
-                    <div className="pt-6 border-t border-border flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">Ready to take the next step?</p>
+                    )}
+
+                    {Array.isArray(selectedJob.requirements) && selectedJob.requirements.length > 0 && (
+                      <div>
+                        <h4 className="font-display font-bold text-primary text-base mb-3">Requirements & Qualifications</h4>
+                        <ul className="space-y-2.5 mb-4">
+                          {selectedJob.requirements.map((req, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
+                              <CheckCircle2 size={16} className="text-accent flex-shrink-0 mt-0.5" />
+                              <span>{req}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {Array.isArray(selectedJob.skills) && selectedJob.skills.length > 0 && (
+                      <div>
+                        <h4 className="font-display font-bold text-primary text-xs uppercase tracking-wider mb-2">Required Tech Stack</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedJob.skills.map((skill) => (
+                            <span key={skill} className="px-3 py-1 text-xs font-semibold bg-accent/10 text-accent rounded-lg border border-accent/20">{skill}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+                      <p className="text-xs text-slate-500">Ready to take the next step in your career?</p>
                       <button onClick={() => setModalTab("apply")} className="bg-accent text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-primary transition-colors inline-flex items-center gap-2 shadow-md">
                         Apply For This Position <ArrowRight size={16} />
                       </button>
@@ -327,9 +513,9 @@ const Career = () => {
                         <div className="w-20 h-20 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto">
                           <FileCheck size={40} />
                         </div>
-                        <h4 className="font-display text-2xl font-bold text-primary">Application Submitted!</h4>
-                        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                          Thank you <span className="font-semibold text-primary">{formData.fullName}</span>! We received your application for <span className="font-semibold text-accent">{selectedJob.title}</span>. Our HR team will contact you at <span className="font-semibold text-primary">{formData.email}</span> within 24–48 hours.
+                        <h4 className="font-display text-2xl font-bold text-primary">Application Submitted Successfully!</h4>
+                        <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                          Thank you <span className="font-semibold text-primary">{formData.fullName}</span>! We received your application for <span className="font-semibold text-accent">{selectedJob.title}</span>. A confirmation welcome email has been sent to <span className="font-semibold text-primary">{formData.email}</span>. Our recruitment team will review your profile shortly.
                         </p>
                         <button onClick={() => setSelectedJob(null)} className="bg-primary text-white text-xs font-semibold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors mt-4">
                           Close & Back to Careers
@@ -345,58 +531,72 @@ const Career = () => {
                               <p className="text-sm font-bold text-primary">{selectedJob.title}</p>
                             </div>
                           </div>
-                          <span className="text-xs font-bold text-accent bg-background px-2.5 py-1 rounded-md border border-accent/30">{selectedJob.department}</span>
+                          <span className="text-xs font-bold text-accent bg-white px-2.5 py-1 rounded-md border border-accent/30">{selectedJob.department}</span>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-4">
-                          {[{ label: "Full Name *", key: "fullName", type: "text", placeholder: "e.g. Rahul Sharma" },
-                          { label: "Email Address *", key: "email", type: "email", placeholder: "e.g. rahul@example.com" },
-                          { label: "Phone Number *", key: "phone", type: "tel", placeholder: "+91 98765 43210" }].map(field => (
-                            <div key={field.key}>
-                              <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">{field.label}</label>
-                              <input type={field.type} required={field.label.includes("*")} placeholder={field.placeholder}
-                                value={formData[field.key]} onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-                            </div>
-                          ))}
+                          <div>
+                            <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Full Name *</label>
+                            <input type="text" required placeholder="e.g. Rahul Sharma"
+                              value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Email Address *</label>
+                            <input type="email" required placeholder="e.g. rahul@example.com"
+                              value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Phone Number *</label>
+                            <input type="tel" required placeholder="+91 98765 43210"
+                              value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                          </div>
+
                           <div>
                             <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Total Experience *</label>
                             <select value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent">
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent">
+                              <option>Fresher / 0-1 Years</option>
                               <option>1-2 Years</option>
                               <option>3-5 Years</option>
                               <option>5-8 Years</option>
                               <option>8+ Years</option>
                             </select>
                           </div>
+
                           <div>
                             <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Expected Salary / CTC</label>
                             <input type="text" placeholder="e.g. ₹12 LPA or $2,000/mo" value={formData.expectedSalary}
                               onChange={(e) => setFormData({ ...formData, expectedSalary: e.target.value })}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                           </div>
+
                           <div>
                             <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Portfolio / GitHub / LinkedIn URL</label>
                             <input type="url" placeholder="https://linkedin.com/in/username" value={formData.portfolioUrl}
                               onChange={(e) => setFormData({ ...formData, portfolioUrl: e.target.value })}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                           </div>
                         </div>
 
                         <div>
                           <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Upload Resume (PDF, DOC, DOCX) <span className="text-accent">*</span></label>
-                          <div className="border-2 border-dashed border-border hover:border-accent rounded-xl p-5 text-center bg-muted/20 transition-colors relative cursor-pointer">
+                          <div className="border-2 border-dashed border-slate-200 hover:border-accent rounded-xl p-5 text-center bg-slate-50 transition-colors relative cursor-pointer">
                             <input type="file" accept=".pdf,.doc,.docx" required onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                             {resumeFile ? (
                               <div className="flex items-center justify-center gap-2 text-accent font-semibold text-sm">
                                 <FileCheck size={20} /><span>{resumeFile.name}</span>
-                                <span className="text-xs text-muted-foreground">({(resumeFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                <span className="text-xs text-slate-500">({(resumeFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                               </div>
                             ) : (
                               <div className="space-y-1">
                                 <Upload size={24} className="text-accent mx-auto" />
                                 <p className="text-xs font-semibold text-primary">Drag & drop or <span className="text-accent hover:underline">browse file</span></p>
-                                <p className="text-[11px] text-muted-foreground">PDF, DOC, DOCX — max 10MB</p>
+                                <p className="text-[11px] text-slate-500">PDF, DOC, DOCX — max 10MB</p>
                               </div>
                             )}
                           </div>
@@ -406,7 +606,7 @@ const Career = () => {
                           <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Cover Letter / Additional Note</label>
                           <textarea rows={3} placeholder="Tell us briefly why you're a great fit for this role..."
                             value={formData.coverLetter} onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                         </div>
 
                         <button type="submit" disabled={isSubmitting}

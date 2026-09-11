@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Link, useNavigate, useLocation } from "@/lib/router-compat";
 import { Phone, Mail, Menu, X, ChevronDown, ArrowRight, LogIn, LogOut, LayoutDashboard, UserCircle, Home, Briefcase, Globe, Users, BookOpen, MessageCircle, Code2, FolderOpen, Info } from "lucide-react";
-import { navLinks, megaServices, megaTechnologies, megaExplore, promotionCategories, softwareCategories, } from "@/data/navigation";
+import { navLinks, megaServices, megaExplore, softwareCategories, } from "@/data/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 // Icon map for mobile drawer nav links
@@ -11,7 +11,6 @@ const NAV_ICONS = {
   "/services": Briefcase,
   "/about":    Info,
   "/portfolio": FolderOpen,
-  "/technologies": Code2,
   "/career":   Users,
   "/contact":  MessageCircle,
   "/blog":     BookOpen,
@@ -23,7 +22,6 @@ const Navbar = () => {
   const [activeMega, setActiveMega] = useState(null);
   const [mobileExpanded, setMobileExpanded] = useState(null);
   const [mobileSubExpanded, setMobileSubExpanded] = useState(null);
-  const [activePromoCategory, setActivePromoCategory] = useState(0);
   const [activeSoftwareCategory, setActiveSoftwareCategory] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const megaTimeout = useRef(null);
@@ -66,11 +64,11 @@ const Navbar = () => {
   const handleMegaLeave = () => {
     megaTimeout.current = setTimeout(() => setActiveMega(null), 200);
   };
-  const getMegaItems = (key) => key === "services" ? megaServices : key === "explore" ? megaExplore : megaTechnologies;
-  const getMegaTitle = (key) => key === "services" ? "Our Services" : key === "explore" ? "Who We Are & Quick Links" : "Our Technologies";
+  const getMegaItems = (key) => key === "services" ? megaServices : megaExplore;
+  const getMegaTitle = (key) => key === "services" ? "Our Services" : "Who We Are & Quick Links";
 
   const isActiveLink = (href, hasMega) => {
-    if (hasMega === "explore" && ["/about", "/technologies", "/blog", "/faq", "/privacy-policy", "/terms-conditions"].includes(location.pathname)) return true;
+    if (hasMega === "explore" && ["/about", "/blog", "/faq", "/privacy-policy", "/terms-conditions"].includes(location.pathname)) return true;
     if (href === "/") return location.pathname === "/";
     return location.pathname === href || location.pathname.startsWith(href);
   };
@@ -175,9 +173,7 @@ const Navbar = () => {
           {/* Desktop Mega Dropdown */}
           <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50 transition-all duration-200 ${activeMega ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2 pointer-events-none"}`}
             onMouseEnter={() => activeMega && handleMegaEnter(activeMega)} onMouseLeave={handleMegaLeave}>
-            {activeMega === "promotion"
-              ? renderCategoryMega(promotionCategories, activePromoCategory, setActivePromoCategory, "/promotion", "Promotion Services")
-              : activeMega === "software"
+            {activeMega === "software"
                 ? renderCategoryMega(softwareCategories, activeSoftwareCategory, setActiveSoftwareCategory, "/software", "Software Products")
                 : activeMega
                   ? renderGridMega(activeMega)

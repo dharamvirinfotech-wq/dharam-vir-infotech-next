@@ -1,1 +1,0 @@
-import ProtectedRoute from '@/components/ProtectedRoute.jsx'; import AdminHireRequests from '@/views/admin/HireRequests.jsx'; export default function AdminHireRequestsPage() { return <ProtectedRoute roles={["admin", "editor"]}><AdminHireRequests /></ProtectedRoute>; }

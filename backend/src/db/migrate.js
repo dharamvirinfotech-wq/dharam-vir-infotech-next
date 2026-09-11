@@ -28,7 +28,7 @@ async function migrate() {
       email VARCHAR(190) NOT NULL UNIQUE,
       phone VARCHAR(30) DEFAULT NULL,
       password_hash VARCHAR(255) DEFAULT NULL,
-      role ENUM('admin','employee','employee') NOT NULL DEFAULT 'user',
+      role ENUM('admin','employee','employer','client','developer','editor','user') NOT NULL DEFAULT 'user',
       company_name VARCHAR(150) DEFAULT NULL,
       status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
       two_factor_enabled TINYINT(1) NOT NULL DEFAULT 0,
@@ -230,6 +230,54 @@ async function migrate() {
         row
       );
     }
+  }
+
+  // Email Logs table for tracking all welcome and custom emails
+  await root.query(`
+    CREATE TABLE IF NOT EXISTS email_logs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      recipient_email VARCHAR(190) NOT NULL,
+      recipient_name VARCHAR(150) DEFAULT NULL,
+      sender_email VARCHAR(190) NOT NULL,
+      subject VARCHAR(255) NOT NULL,
+      email_type ENUM('welcome_client','admin_alert','custom_admin','contact_reply','other') NOT NULL DEFAULT 'other',
+      status ENUM('sent','failed','skipped') NOT NULL DEFAULT 'sent',
+      inquiry_id INT DEFAULT NULL,
+      error_message TEXT DEFAULT NULL,
+      body_preview TEXT DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_el_recipient (recipient_email),
+      INDEX idx_el_type (email_type),
+      INDEX idx_el_created (created_at)
+    ) ENGINE=InnoDB;
+  `);
+
+  // App Settings table for managing SMTP & email sender directly from Admin Panel
+  await root.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      setting_key VARCHAR(100) NOT NULL UNIQUE,
+      setting_value TEXT DEFAULT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;
+  `);
+
+  // Seed default SMTP & admin email settings if not present
+  const defaultSettings = [
+    ['smtp_host', 'smtp.gmail.com'],
+    ['smtp_port', '587'],
+    ['smtp_user', 'mukesh.vin99@gmail.com'],
+    ['smtp_password', 'ntff lcpo esyc jmqp'],
+    ['mail_from', 'Dharamvir Info Tech <mukesh.vin99@gmail.com>'],
+    ['admin_notify_email', 'mukesh.vin99@gmail.com'],
+    ['smtp_secure', 'false'],
+  ];
+  for (const [key, val] of defaultSettings) {
+    await root.query(
+      `INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE setting_key = setting_key;`,
+      [key, val]
+    );
   }
 
   console.log(`Migration complete on database "${DB_NAME}"`);

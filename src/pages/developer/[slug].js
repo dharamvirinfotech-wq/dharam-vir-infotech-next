@@ -1,1 +1,9 @@
-import DeveloperProfile from '@/views/DeveloperProfile.jsx'; export default DeveloperProfile;
+import DeveloperProfile from '@/views/DeveloperProfile.jsx';
+
+export default DeveloperProfile;
+
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

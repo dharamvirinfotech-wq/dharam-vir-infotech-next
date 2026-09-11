@@ -25,9 +25,7 @@ import {
 import {
   navLinks,
   megaServices,
-  megaTechnologies,
   megaExplore,
-  promotionCategories,
   softwareCategories,
 } from "@/data/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -37,7 +35,6 @@ const NAV_ICONS = {
   "/services": Briefcase,
   "/about": Info,
   "/portfolio": FolderOpen,
-  "/technologies": Code2,
   "/career": Users,
   "/contact": MessageCircle,
   "/blog": BookOpen,
@@ -116,12 +113,12 @@ const AnimatedNavbar = () => {
   };
 
   const getMegaItems = (key) =>
-    key === "services" ? megaServices : key === "explore" ? megaExplore : megaTechnologies;
+    key === "services" ? megaServices : megaExplore;
 
   const isActiveLink = (href, hasMega) => {
     if (
       hasMega === "explore" &&
-      ["/about", "/technologies", "/blog", "/faq", "/privacy-policy", "/terms-conditions"].includes(
+      ["/about", "/blog", "/faq", "/privacy-policy", "/terms-conditions"].includes(
         location.pathname
       )
     )

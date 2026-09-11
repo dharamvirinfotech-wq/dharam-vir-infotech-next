@@ -1,34 +1,63 @@
 const nodemailer = require('nodemailer');
+const { getEmailSettings, logEmail } = require('./emailService');
 
-let cachedTransporter = null;
-
-function getTransporter() {
-  if (cachedTransporter) return cachedTransporter;
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASSWORD;
-  if (!host || !user || !pass) {
-    console.warn('[mailer] SMTP not configured — emails will be skipped.');
+/**
+ * Creates transporter dynamically using DB settings or fallback to process.env
+ */
+async function createTransporter() {
+  const config = await getEmailSettings();
+  if (!config.user || !config.pass) {
+    console.warn('[mailer] SMTP credentials not configured.');
     return null;
   }
-  cachedTransporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: String(process.env.SMTP_SECURE || 'false') === 'true' || port === 465,
-    auth: { user, pass },
-  });
-  return cachedTransporter;
+
+  const isGmail = (config.host || '').includes('gmail');
+  const transporter = nodemailer.createTransport(
+    isGmail
+      ? {
+          service: 'gmail',
+          auth: {
+            user: config.user.trim(),
+            pass: config.pass.trim(),
+          },
+        }
+      : {
+          host: config.host,
+          port: config.port,
+          secure: config.secure || config.port === 465,
+          auth: {
+            user: config.user.trim(),
+            pass: config.pass.trim(),
+          },
+        }
+  );
+
+  return { transporter, config };
 }
 
 /**
- * Send an email. Silently no-ops (with a warning) if SMTP isn't configured,
- * so a hire-request submission never fails because of email transport issues.
+ * Send an email with automatic database logging.
  */
-async function sendMail({ to, subject, html, text, replyTo }) {
-  const transporter = getTransporter();
-  if (!transporter) return { skipped: true };
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+async function sendMail({ to, subject, html, text, replyTo, emailType = 'other', inquiryId = null, recipientName = null }) {
+  const setup = await createTransporter();
+  if (!setup) {
+    await logEmail({
+      recipientEmail: Array.isArray(to) ? to.join(', ') : to,
+      recipientName,
+      senderEmail: 'none',
+      subject,
+      emailType,
+      status: 'skipped',
+      inquiryId,
+      errorMessage: 'SMTP credentials missing',
+      bodyPreview: text || html
+    });
+    return { skipped: true };
+  }
+
+  const { transporter, config } = setup;
+  const from = config.mailFrom || config.user;
+
   try {
     const info = await transporter.sendMail({
       from,
@@ -36,11 +65,38 @@ async function sendMail({ to, subject, html, text, replyTo }) {
       subject,
       html,
       text,
-      replyTo,
+      replyTo: replyTo || from,
     });
-    return { messageId: info.messageId };
+
+    console.log(`[mailer] Email sent to ${to} (${subject}) - ID: ${info.messageId}`);
+
+    await logEmail({
+      recipientEmail: Array.isArray(to) ? to.join(', ') : to,
+      recipientName,
+      senderEmail: config.user,
+      subject,
+      emailType,
+      status: 'sent',
+      inquiryId,
+      bodyPreview: text || html
+    });
+
+    return { success: true, messageId: info.messageId, sender: config.user };
   } catch (err) {
     console.error('[mailer] sendMail failed:', err.message);
+
+    await logEmail({
+      recipientEmail: Array.isArray(to) ? to.join(', ') : to,
+      recipientName,
+      senderEmail: config.user,
+      subject,
+      emailType,
+      status: 'failed',
+      inquiryId,
+      errorMessage: err.message,
+      bodyPreview: text || html
+    });
+
     return { error: err.message };
   }
 }
