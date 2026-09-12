@@ -23,7 +23,9 @@ import {
   ShieldCheck,
   ChevronRight,
   ExternalLink,
+  Mail,
 } from "lucide-react";
+import { contactApi } from "@/lib/api";
 
 export default function BlogPostDetail({ post, slug }) {
   const currentPost = post || getBlogPostBySlug(slug) || BLOG_POSTS[0];
@@ -53,6 +55,39 @@ export default function BlogPostDetail({ post, slug }) {
     if (typeof window !== "undefined") {
       const url = encodeURIComponent(window.location.href);
       window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
+    }
+  };
+
+  // Newsletter Subscription in Right Sidebar
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [newsletterSubscribing, setNewsletterSubscribing] = useState(false);
+  const [newsletterMessage, setNewsletterMessage] = useState("");
+
+  const handleNewsletterSubscribe = async (e) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim() || !newsletterEmail.includes("@")) return;
+    setNewsletterSubscribing(true);
+    setNewsletterMessage("");
+    try {
+      await contactApi.submit({
+        name: "Tech Radar Subscriber",
+        email: newsletterEmail.trim(),
+        service: "Newsletter",
+        subject: "Tech Radar Newsletter Subscription",
+        message: `User subscribed to Tech Radar Engineering Newsletter from blog details sidebar: ${currentPost.title}`,
+      });
+      setNewsletterSubscribed(true);
+      setNewsletterEmail("");
+      setNewsletterMessage("Thank you! Welcome email has been sent.");
+      setTimeout(() => {
+        setNewsletterSubscribed(false);
+        setNewsletterMessage("");
+      }, 6000);
+    } catch (err) {
+      setNewsletterMessage(err?.response?.data?.message || "Failed to subscribe. Please try again.");
+    } finally {
+      setNewsletterSubscribing(false);
     }
   };
 
@@ -169,7 +204,7 @@ export default function BlogPostDetail({ post, slug }) {
             {/* Left Content Column (8 cols) */}
             <div className="lg:col-span-8 space-y-8">
               {/* Featured Visual Image Banner */}
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-900">
+              <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 bg-slate-900">
                 <div className="aspect-[16/9] w-full">
                   <img
                     src={currentPost.image}
@@ -180,15 +215,15 @@ export default function BlogPostDetail({ post, slug }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
               </div>
 
-              {/* Key Executive Takeaways Card */}
+              {/* Key Executive Takeaways Card (Clean transparent style with subtle border) */}
               {currentPost.keyTakeaways && currentPost.keyTakeaways.length > 0 && (
-                <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-slate-900 dark:to-slate-800/80 rounded-3xl p-7 sm:p-8 border border-blue-200/80 dark:border-slate-700 shadow-sm">
+                <div className="rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs">
                   <div className="flex items-center gap-3 mb-5">
                     <span className="w-9 h-9 rounded-xl bg-accent text-slate-900 flex items-center justify-center font-bold shadow-md shadow-accent/20">
                       <Sparkles size={18} />
                     </span>
                     <div>
-                      <h3 className="text-base sm:text-lg font-black text-primary dark:text-white font-mono uppercase tracking-wider">
+                      <h3 className="text-base sm:text-lg font-black text-primary font-mono uppercase tracking-wider">
                         Key Architecture Takeaways
                       </h3>
                       <p className="text-xs text-slate-500">Essential engineering insights at a glance</p>
@@ -199,12 +234,12 @@ export default function BlogPostDetail({ post, slug }) {
                     {currentPost.keyTakeaways.map((takeaway, idx) => (
                       <div
                         key={idx}
-                        className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white dark:bg-slate-800/70 border border-blue-100 dark:border-slate-700/60 shadow-2xs"
+                        className="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200/70"
                       >
                         <span className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                           {idx + 1}
                         </span>
-                        <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+                        <span className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
                           {takeaway}
                         </span>
                       </div>
@@ -213,13 +248,13 @@ export default function BlogPostDetail({ post, slug }) {
                 </div>
               )}
 
-              {/* Prose Content Body */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-200/90 dark:border-slate-800 shadow-xl space-y-12">
+              {/* Prose Content Body (No solid card background) */}
+              <div className="rounded-3xl p-6 sm:p-10 border border-slate-200/90 shadow-2xs space-y-12">
                 {(currentPost.content || []).map((section, idx) => (
                   <div key={idx} id={`section-${idx}`} className="space-y-5 scroll-mt-28">
                     <div className="flex items-center gap-3">
                       <span className="w-2 h-7 rounded-full bg-accent inline-block" />
-                      <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-white tracking-tight">
+                      <h2 className="text-xl sm:text-2xl font-black text-primary tracking-tight">
                         {section.heading}
                       </h2>
                     </div>
@@ -227,7 +262,7 @@ export default function BlogPostDetail({ post, slug }) {
                     {section.paragraphs.map((para, pIdx) => (
                       <p
                         key={pIdx}
-                        className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans"
+                        className="text-sm sm:text-base text-slate-700 leading-relaxed font-sans"
                       >
                         {para}
                       </p>
@@ -235,7 +270,7 @@ export default function BlogPostDetail({ post, slug }) {
 
                     {/* Architecture Quote Highlight */}
                     {idx === 0 && (
-                      <div className="my-6 p-6 rounded-2xl bg-blue-50/70 dark:bg-slate-800/60 border-l-4 border-accent text-slate-800 dark:text-slate-200">
+                      <div className="my-6 p-6 rounded-2xl border-l-4 border-accent border-y border-r border-slate-200/70 text-slate-800">
                         <div className="flex items-start gap-3">
                           <MessageSquareQuote size={24} className="text-accent shrink-0 mt-0.5" />
                           <p className="text-xs sm:text-sm italic font-medium leading-relaxed">
@@ -248,7 +283,7 @@ export default function BlogPostDetail({ post, slug }) {
                 ))}
 
                 {/* Tags Matrix */}
-                <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-8 border-t border-slate-200/70">
                   <span className="text-xs font-mono font-bold uppercase text-slate-400 block mb-3 tracking-wider">
                     RELEVANT TOPICS & TECH STACK
                   </span>
@@ -256,7 +291,7 @@ export default function BlogPostDetail({ post, slug }) {
                     {(currentPost.tags || []).map((tag, i) => (
                       <span
                         key={i}
-                        className="text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-accent hover:text-accent transition-colors"
+                        className="text-xs font-semibold px-3.5 py-1.5 rounded-xl text-slate-700 border border-slate-200 hover:border-accent hover:text-accent transition-colors"
                       >
                         #{tag}
                       </span>
@@ -265,9 +300,9 @@ export default function BlogPostDetail({ post, slug }) {
                 </div>
 
                 {/* Bottom Share & Feedback Bar */}
-                <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div className="pt-6 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span className="text-xs font-bold text-slate-700">
                       Was this architecture breakdown useful?
                     </span>
                   </div>
@@ -275,31 +310,31 @@ export default function BlogPostDetail({ post, slug }) {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleShareTwitter}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-accent hover:text-slate-900 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-700 border border-slate-200 text-xs font-bold hover:bg-accent hover:text-slate-900 transition-colors"
                     >
                       <Twitter size={13} />
                       Tweet
                     </button>
                     <button
                       onClick={handleShareLinkedIn}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-accent hover:text-slate-900 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-700 border border-slate-200 text-xs font-bold hover:bg-accent hover:text-slate-900 transition-colors"
                     >
                       <Linkedin size={13} />
                       Share
                     </button>
                     <button
                       onClick={handleCopyLink}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-accent hover:text-slate-900 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-700 border border-slate-200 text-xs font-bold hover:bg-accent hover:text-slate-900 transition-colors"
                     >
-                      {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                      {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                       {copied ? "Copied" : "Copy"}
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Author Detailed Bio Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-7 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              {/* Author Detailed Bio Card (Clean border, transparent background) */}
+              <div className="rounded-3xl p-7 sm:p-8 border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <img
                   src={currentPost.author.avatar}
                   alt={currentPost.author.name}
@@ -307,14 +342,14 @@ export default function BlogPostDetail({ post, slug }) {
                 />
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                    <h4 className="text-base font-bold text-primary dark:text-white">
+                    <h4 className="text-base font-bold text-primary">
                       Written by {currentPost.author.name}
                     </h4>
                     <span className="text-xs font-mono font-bold text-accent px-2.5 py-0.5 rounded-md bg-accent/10">
                       {currentPost.author.role}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                     Lead engineer at Dharam Vir Infotech specializing in enterprise-grade web architectures, cloud-native DevOps pipelines, and mission-critical multi-platform system development.
                   </p>
                 </div>
@@ -323,11 +358,11 @@ export default function BlogPostDetail({ post, slug }) {
 
             {/* Right Sticky Sidebar (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
-              {/* Table of Contents Widget */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-2xs sticky top-28">
-                <div className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+              {/* Table of Contents Widget (Clean border, transparent background) */}
+              <div className="rounded-3xl p-6 border border-slate-200/90 shadow-2xs sticky top-28">
+                <div className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-200/70">
                   <BookOpen size={16} className="text-accent" />
-                  <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700">
                     TABLE OF CONTENTS
                   </h4>
                 </div>
@@ -340,8 +375,8 @@ export default function BlogPostDetail({ post, slug }) {
                       onClick={() => setActiveSection(idx)}
                       className={`block text-xs py-2 px-3 rounded-xl transition-all leading-snug ${
                         activeSection === idx
-                          ? "bg-accent/15 text-primary dark:text-white font-bold border-l-3 border-accent"
-                          : "text-slate-600 dark:text-slate-400 hover:text-accent hover:bg-slate-50 dark:hover:bg-slate-800"
+                          ? "bg-accent/15 text-primary font-bold border-l-3 border-accent"
+                          : "text-slate-600 hover:text-accent hover:bg-black/5"
                       }`}
                     >
                       {idx + 1}. {section.heading}
@@ -370,56 +405,100 @@ export default function BlogPostDetail({ post, slug }) {
                 </div>
               </div>
 
-              {/* Production SLA & Guarantees */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-2xs space-y-4">
+              {/* Production SLA & Guarantees (Clean border, transparent background) */}
+              <div className="rounded-3xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2">
                   <ShieldCheck size={18} className="text-accent" />
-                  <h5 className="text-xs font-mono uppercase font-bold text-slate-700 dark:text-slate-200">
+                  <h5 className="text-xs font-mono uppercase font-bold text-slate-700">
                     PRODUCTION GUARANTEES
                   </h5>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                    <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                    <CheckCircle2 size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-700 font-medium">
                       Rigorous OWASP Top 10 security standards implemented in every code sample.
                     </span>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                    <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                    <CheckCircle2 size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-700 font-medium">
                       Proven in real production deployments handling millions of monthly requests.
                     </span>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                    <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                    <CheckCircle2 size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-700 font-medium">
                       Continuous architectural support and SLA-backed maintenance contracts.
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Explore Portfolio */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
-                <h5 className="text-xs font-mono uppercase font-bold text-slate-400 mb-3 tracking-wider">
+              {/* Newsletter & Tech Digest Subscribe Card (Integrated API) */}
+              <div className="rounded-3xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2">
+                  <Mail size={18} className="text-accent" />
+                  <h5 className="text-xs font-mono uppercase font-bold text-slate-700">
+                    TECH RADAR NEWSLETTER
+                  </h5>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Join 10,000+ engineers receiving bi-weekly architecture breakdowns, benchmarks, and production insights.
+                </p>
+
+                {newsletterSubscribed ? (
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    <span>Thank you! Welcome email sent to your inbox.</span>
+                  </div>
+                ) : (
+                  <form onSubmit={handleNewsletterSubscribe} className="space-y-2.5">
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        placeholder="Your corporate email..."
+                        value={newsletterEmail}
+                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={newsletterSubscribing}
+                      className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-accent text-white hover:text-slate-900 font-extrabold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
+                    >
+                      {newsletterSubscribing ? "Subscribing..." : "Sign Up"}
+                    </button>
+                    {newsletterMessage && (
+                      <p className="text-xs text-rose-500 font-medium">{newsletterMessage}</p>
+                    )}
+                  </form>
+                )}
+              </div>
+
+              {/* Explore Portfolio (Clean border, transparent background) */}
+              <div className="rounded-3xl p-6 border border-slate-200/90 shadow-2xs">
+                <h5 className="text-xs font-mono uppercase font-bold text-slate-500 mb-3 tracking-wider">
                   CASE STUDY REPOSITORIES
                 </h5>
                 <div className="space-y-2">
                   <Link
                     to="/portfolio"
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/link"
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-black/5 transition-colors group/link"
                   >
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover/link:text-accent">
+                    <span className="text-xs font-bold text-slate-700 group-hover/link:text-accent">
                       Verified Case Studies
                     </span>
                     <ArrowRight size={14} className="text-accent group-hover/link:translate-x-1 transition-transform" />
                   </Link>
                   <Link
                     to="/services"
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/link"
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-black/5 transition-colors group/link"
                   >
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover/link:text-accent">
+                    <span className="text-xs font-bold text-slate-700 group-hover/link:text-accent">
                       Enterprise Services List
                     </span>
                     <ArrowRight size={14} className="text-accent group-hover/link:translate-x-1 transition-transform" />
@@ -430,13 +509,13 @@ export default function BlogPostDetail({ post, slug }) {
           </div>
 
           {/* ─── RELATED ARTICLES SECTION ─── */}
-          <div className="mt-16 pt-12 border-t border-slate-200/80 dark:border-slate-800">
+          <div className="mt-16 pt-12 border-t border-slate-200/80">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <span className="text-xs font-mono uppercase font-bold text-accent block mb-1">
                   MORE FROM TECH RADAR
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-black text-primary dark:text-white">
+                <h3 className="text-2xl sm:text-3xl font-black text-primary">
                   Related Technical Articles
                 </h3>
               </div>
@@ -454,7 +533,7 @@ export default function BlogPostDetail({ post, slug }) {
                 <Link
                   key={rel.id}
                   to={`/blog/${rel.slug}`}
-                  className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-xl hover:border-accent/60 transition-all duration-300 flex flex-col justify-between block"
+                  className="group rounded-2xl overflow-hidden border border-slate-200/90 shadow-2xs hover:shadow-xl hover:border-accent/60 transition-all duration-300 flex flex-col justify-between block"
                 >
                   <div className="h-44 w-full overflow-hidden bg-slate-900 relative">
                     <img
@@ -468,10 +547,10 @@ export default function BlogPostDetail({ post, slug }) {
                   </div>
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      <span className="text-[11px] text-slate-400 font-medium block mb-2">
+                      <span className="text-[11px] text-slate-500 font-medium block mb-2">
                         {rel.date} • {rel.readTime}
                       </span>
-                      <h4 className="text-sm font-bold text-primary dark:text-white group-hover:text-accent transition-colors line-clamp-2 leading-snug mb-3">
+                      <h4 className="text-sm font-bold text-primary group-hover:text-accent transition-colors line-clamp-2 leading-snug mb-3">
                         {rel.title}
                       </h4>
                     </div>

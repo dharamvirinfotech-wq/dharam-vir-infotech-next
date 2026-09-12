@@ -6,6 +6,7 @@ import SectionHeader from "@/components/SectionHeader";
 import FaqSection from "@/components/FaqSection";
 import { BLOG_POSTS, BLOG_CATEGORIES, blogFaqsData } from "@/data/blog-data";
 import { Link } from "@/lib/router-compat";
+import { contactApi } from "@/lib/api";
 import {
   Calendar,
   Clock,
@@ -40,12 +41,32 @@ export default function BlogView() {
   // Featured Hero Post is the first article
   const featuredPost = BLOG_POSTS[0];
 
-  const handleSubscribe = (e) => {
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState("");
+
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (emailInput.trim()) {
+    if (!emailInput.trim() || !emailInput.includes("@")) return;
+    setSubscribing(true);
+    setSubscribeMessage("");
+    try {
+      await contactApi.submit({
+        name: "Tech Radar Subscriber",
+        email: emailInput.trim(),
+        service: "Newsletter",
+        subject: "Tech Radar Newsletter Subscription",
+        message: "User subscribed to Tech Radar bi-weekly engineering newsletter from /blog page.",
+      });
       setEmailSubscribed(true);
       setEmailInput("");
-      setTimeout(() => setEmailSubscribed(false), 5000);
+      setTimeout(() => {
+        setEmailSubscribed(false);
+      }, 6000);
+    } catch (err) {
+      setSubscribeMessage(err?.response?.data?.message || "Subscription failed. Please try again.");
+      setTimeout(() => setSubscribeMessage(""), 5000);
+    } finally {
+      setSubscribing(false);
     }
   };
 
@@ -341,10 +362,14 @@ export default function BlogView() {
                     />
                     <button
                       type="submit"
-                      className="w-full py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-slate-900 font-extrabold text-xs transition-all shadow-md cursor-pointer"
+                      disabled={subscribing}
+                      className="w-full py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-slate-900 font-extrabold text-xs transition-all shadow-md cursor-pointer disabled:opacity-60"
                     >
-                      Subscribe to Tech Radar
+                      {subscribing ? "Subscribing..." : "Subscribe to Tech Radar"}
                     </button>
+                    {subscribeMessage && (
+                      <p className="text-xs text-rose-300 font-medium">{subscribeMessage}</p>
+                    )}
                   </form>
                 )}
               </div>

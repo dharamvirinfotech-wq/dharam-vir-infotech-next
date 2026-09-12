@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Link, useNavigate, useLocation } from "@/lib/router-compat";
+import { contactApi } from "@/lib/api";
 import {
   Menu,
   X,
@@ -128,14 +129,34 @@ const AnimatedNavbar = () => {
     return location.pathname === href || location.pathname.startsWith(href + "/");
   };
 
-  const handleSubscribe = (e) => {
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState("");
+
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!subscriberEmail) return;
-    setSubscribed(true);
-    setTimeout(() => {
-      setSubscribed(false);
-      setSubscriberEmail("");
-    }, 4000);
+    if (!subscriberEmail || !subscriberEmail.includes("@")) return;
+    setSubscribing(true);
+    setSubscribeMessage("");
+    try {
+      await contactApi.submit({
+        name: "Tech Radar Subscriber",
+        email: subscriberEmail.trim(),
+        service: "Newsletter",
+        subject: "Tech Radar Newsletter Subscription",
+        message: `User signed up for Tech Radar Engineering Newsletter from Navbar drawer on page ${location.pathname}.`,
+      });
+      setSubscribed(true);
+      setSubscribeMessage("Thank you for subscribing! Welcome email has been sent.");
+      setTimeout(() => {
+        setSubscribed(false);
+        setSubscriberEmail("");
+        setSubscribeMessage("");
+      }, 5000);
+    } catch (err) {
+      setSubscribeMessage(err?.response?.data?.message || "Failed to subscribe. Please try again.");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   const isHomePage = location.pathname === "/";
@@ -386,14 +407,15 @@ const AnimatedNavbar = () => {
               />
               <button
                 type="submit"
-                className="bg-primary hover:bg-accent text-white font-bold text-xs uppercase tracking-wider px-5 py-3 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                disabled={subscribing}
+                className="bg-primary hover:bg-accent text-white font-bold text-xs uppercase tracking-wider px-5 py-3 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
               >
-                {subscribed ? "SENT!" : "SIGN UP"}
+                {subscribing ? "SENDING..." : subscribed ? "SENT!" : "SIGN UP"}
               </button>
             </form>
-            {subscribed && (
-              <p className="text-accent text-xs font-semibold mt-2">
-                Thank you for subscribing! We'll stay in touch.
+            {subscribeMessage && (
+              <p className={`text-xs font-semibold mt-2 ${subscribed ? "text-emerald-600" : "text-rose-500"}`}>
+                {subscribeMessage}
               </p>
             )}
           </div>
