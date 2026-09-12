@@ -116,15 +116,16 @@ const AnimatedNavbar = () => {
     key === "services" ? megaServices : megaExplore;
 
   const isActiveLink = (href, hasMega) => {
-    if (
-      hasMega === "explore" &&
-      ["/about", "/blog", "/faq", "/privacy-policy", "/terms-conditions"].includes(
-        location.pathname
-      )
-    )
-      return true;
+    if (hasMega === "explore") {
+      return ["/career", "/blog", "/faq", "/mission-vision", "/privacy-policy", "/terms-conditions"].some(
+        (path) => location.pathname === path || location.pathname.startsWith(path + "/")
+      );
+    }
+    if (hasMega === "services") {
+      return location.pathname === "/services" || location.pathname.startsWith("/services/");
+    }
     if (href === "/") return location.pathname === "/";
-    return location.pathname === href || location.pathname.startsWith(href);
+    return location.pathname === href || location.pathname.startsWith(href + "/");
   };
 
   const handleSubscribe = (e) => {
@@ -143,26 +144,26 @@ const AnimatedNavbar = () => {
   return (
     <>
       {/* 
-        Sticky Header:
-        - Home page: Transparent when unscrolled, solid white on scroll
+        Sticky Animated Header:
+        - Home page top: Transparent
+        - Home page scrolled: Solid white with shadow
         - Other pages: Always solid white with shadow and clean border
       */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
-          showSolidNavbar
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${showSolidNavbar
             ? "bg-white/95 backdrop-blur-md shadow-md border-b border-slate-200/80 py-2.5"
             : "bg-transparent border-b border-transparent py-3 sm:py-4.5"
-        }`}
+          }`}
       >
         <div className="container mx-auto max-w-7xl flex items-center justify-between px-4 sm:px-6 relative">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
             <Image
               src="/logo.png"
               alt="Dharam Vir Infotech"
-              width={210}
-              height={70}
-              className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              width={160}
+              height={44}
+              className="h-10 w-auto object-contain"
               priority
             />
           </Link>
@@ -172,7 +173,7 @@ const AnimatedNavbar = () => {
             {navLinks.map((link) =>
               link.hasMega ? (
                 <div
-                  key={link.href}
+                  key={link.label}
                   className="py-1"
                   onMouseEnter={() => handleMegaEnter(link.hasMega)}
                   onMouseLeave={handleMegaLeave}
@@ -196,7 +197,7 @@ const AnimatedNavbar = () => {
                 </div>
               ) : (
                 <Link
-                  key={link.href}
+                  key={link.label}
                   to={link.href}
                   className={`text-[15px] font-semibold transition-colors px-3.5 py-2 rounded-full ${isActiveLink(link.href)
                     ? "text-accent font-bold"

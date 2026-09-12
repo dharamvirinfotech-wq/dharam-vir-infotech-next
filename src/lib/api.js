@@ -79,4 +79,11 @@ export const caseStudiesApi = {
     create: (payload) => api.post("/case-studies/admin", payload).then((r) => r.data),
     update: (id, payload) => api.put(`/case-studies/admin/${id}`, payload).then((r) => r.data),
     remove: (id) => api.delete(`/case-studies/admin/${id}`).then((r) => r.data),
+    uploadImage: (formData) =>
+        api
+            .post("/case-studies/admin/upload-image", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data),
 };
+

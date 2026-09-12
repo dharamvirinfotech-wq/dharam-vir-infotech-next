@@ -103,3 +103,20 @@ exports.remove = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * POST /api/case-studies/admin/upload-image
+ * Uploads a cover or showcase image and returns public URL
+ */
+exports.uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+    const publicUrl = `/uploads/portfolio/${req.file.filename}`;
+    res.json({ url: publicUrl, filename: req.file.filename });
+  } catch (err) {
+    next(err);
+  }
+};
+

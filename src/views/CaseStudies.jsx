@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
 import { caseStudiesApi } from "@/lib/api";
 import { Link } from "@/lib/router-compat";
+import { FALLBACK_PROJECTS } from "@/utils/portfolioData";
 import { ArrowRight, Clock, Users, Tag, TrendingUp, CheckCircle, ExternalLink, Loader2, Search } from "lucide-react";
 
 const INDUSTRY_COLORS = {
@@ -154,9 +155,19 @@ const CaseStudies = () => {
   const [activeIndustry, setActiveIndustry] = useState("All");
 
   useEffect(() => {
-    caseStudiesApi.list()
-      .then((d) => setCaseStudies(d.case_studies || []))
-      .catch(() => {})
+    caseStudiesApi
+      .list()
+      .then((d) => {
+        if (Array.isArray(d?.case_studies) && d.case_studies.length > 0) {
+          setCaseStudies(d.case_studies);
+        } else {
+          setCaseStudies(FALLBACK_PROJECTS);
+        }
+      })
+      .catch((err) => {
+        console.warn("CaseStudies API error, using static fallback:", err);
+        setCaseStudies(FALLBACK_PROJECTS);
+      })
       .finally(() => setLoading(false));
   }, []);
 

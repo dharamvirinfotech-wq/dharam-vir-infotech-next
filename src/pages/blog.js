@@ -1,1 +1,2 @@
-import Blog from '@/views/Blog.jsx'; export default Blog;
+import BlogView from '@/views/BlogView.jsx';
+export default BlogView;

@@ -302,9 +302,15 @@ const Inquiries = () => {
                           <div className="text-muted-foreground mt-0.5">{i.phone || "—"}</div>
                         </td>
                         <td className="py-3.5 px-4 max-w-xs">
-                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 mb-1">
-                            {i.service || "General Inquiry"}
-                          </span>
+                          {i.service && i.service.startsWith("Portfolio") ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-1">
+                              📁 {i.service}
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 mb-1">
+                              {i.service || "General Inquiry"}
+                            </span>
+                          )}
                           <div className="text-xs text-muted-foreground truncate" title={i.subject}>
                             {i.subject || i.message}
                           </div>

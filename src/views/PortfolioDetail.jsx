@@ -4,24 +4,27 @@ import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
+import ProjectEnquiryCard from "@/components/ProjectEnquiryCard";
 import { caseStudiesApi } from "@/lib/api";
+import { getFallbackProjectBySlug } from "@/utils/portfolioData";
+import { getTechIconInfo } from "@/utils/techIcons";
 import {
   ExternalLink,
   ArrowLeft,
   Loader2,
-  TrendingUp,
-  Cpu,
   Layers,
-  Globe,
   Share2,
-  ArrowUpRight,
-  ShieldCheck,
   CheckCircle2,
   ChevronDown,
   Sparkles,
   HelpCircle,
-  Activity,
   Server,
+  TrendingUp,
+  Cpu,
+  ShieldCheck,
+  Target,
+  FileCheck2,
+  Award,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,18 +48,45 @@ const PortfolioDetail = () => {
     setLoading(true);
     setNotFound(false);
 
+    // Primary: fetch from Backend API
     caseStudiesApi
       .getBySlug(slug)
       .then((res) => {
-        if (res.case_study) {
-          setProject(res.case_study);
+        if (res?.case_study) {
+          const apiCs = res.case_study;
+          // Merge with fallback data so approach, key_features, roi_metrics exist even if DB row is minimal
+          const fallback = getFallbackProjectBySlug(slug) || {};
+          setProject({
+            ...fallback,
+            ...apiCs,
+            approach: apiCs.approach || fallback.approach || "",
+            overview: apiCs.overview || fallback.overview || "",
+            key_features: Array.isArray(apiCs.key_features) && apiCs.key_features.length > 0 ? apiCs.key_features : fallback.key_features || [],
+            roi_metrics: Array.isArray(apiCs.roi_metrics) && apiCs.roi_metrics.length > 0 ? apiCs.roi_metrics : fallback.roi_metrics || [],
+            what_they_gained: Array.isArray(apiCs.what_they_gained) && apiCs.what_they_gained.length > 0 ? apiCs.what_they_gained : fallback.what_they_gained || [],
+            // If API has faqs array with elements, use API; otherwise use fallback faqs
+            faqs: Array.isArray(apiCs.faqs) && apiCs.faqs.length > 0 ? apiCs.faqs : fallback.faqs || [],
+            key_highlights: Array.isArray(apiCs.key_highlights) && apiCs.key_highlights.length > 0 ? apiCs.key_highlights : fallback.key_highlights || [],
+            metrics: Array.isArray(apiCs.metrics) && apiCs.metrics.length > 0 ? apiCs.metrics : fallback.metrics || [],
+          });
         } else {
-          setNotFound(true);
+          // Fallback from utils
+          const fallback = getFallbackProjectBySlug(slug);
+          if (fallback) {
+            setProject(fallback);
+          } else {
+            setNotFound(true);
+          }
         }
       })
       .catch((err) => {
-        console.error("Fetch error:", err);
-        setNotFound(true);
+        console.warn("API failed to fetch case study, checking fallback data:", err);
+        const fallback = getFallbackProjectBySlug(slug);
+        if (fallback) {
+          setProject(fallback);
+        } else {
+          setNotFound(true);
+        }
       })
       .finally(() => setLoading(false));
   }, [slug]);
@@ -111,6 +141,39 @@ const PortfolioDetail = () => {
 
   const projectImg = getImageForProject(project.slug, project.cover_image);
 
+  // Derive structured editorial fields with sensible defaults
+  const approachText = project.approach || project.solution || "We designed a modern high-performance software architecture utilizing native binary stream handlers, asynchronous queues, and automated test pipelines with zero downtime.";
+  const overviewText = project.overview || project.subtitle || project.challenge || "At Dharam Vir Infotech, we specialize in delivering innovative, tailored technology services that drive success and accelerate enterprise growth.";
+  const keyFeaturesList = Array.isArray(project.key_features) && project.key_features.length > 0
+    ? project.key_features
+    : Array.isArray(project.key_highlights) && project.key_highlights.length > 0
+      ? project.key_highlights
+      : [
+        "End-to-end system assessment and scalable migration roadmap.",
+        "High-performance architecture optimization with zero memory leaks.",
+        "Automated cryptographic verification ensuring strict data integrity.",
+        "Continuous integration and automated QA regression testing.",
+        "Role-based access control with comprehensive administrative audit logs."
+      ];
+
+  const roiList = Array.isArray(project.roi_metrics) && project.roi_metrics.length > 0
+    ? project.roi_metrics
+    : [
+      "Sub-80ms low latency query response under enterprise peak concurrency.",
+      "Zero data loss SLA maintained across all batch conversion cycles.",
+      "Over 45% reduction in recurring cloud processing and infrastructure costs.",
+      "Empowered non-technical teams through automated intuitive desktop workflows."
+    ];
+
+  const gainedList = Array.isArray(project.what_they_gained) && project.what_they_gained.length > 0
+    ? project.what_they_gained
+    : [
+      "Future-ready software ecosystem built for continuous feature expansion.",
+      "Streamlined operational workflows driven by real-time telemetry analytics.",
+      "Enhanced customer trust through tamper-proof data privacy standards.",
+      "Sustainable digital transformation backed by 24/7 dedicated engineering support."
+    ];
+
   return (
     <div
       className="min-h-screen text-foreground"
@@ -120,11 +183,11 @@ const PortfolioDetail = () => {
       <PageBanner
         title={project.title}
         subtitle={project.subtitle || `Engineering case study & technical architecture for ${project.client_name}`}
-        breadcrumb={`Portfolio / ${project.title}`}
+        breadcrumb={`Portfolio / ${project.title.split("-")[0].trim()}`}
       />
 
-      <section className="py-16">
-        <div className="container mx-auto px-4 max-w-6xl">
+      <section className="py-10">
+        <div className="container mx-auto px-4 max-w-7xl">
           {/* Top Back & Share Bar */}
           <div className="flex items-center justify-between mb-8">
             <Link
@@ -134,246 +197,234 @@ const PortfolioDetail = () => {
               <ArrowLeft size={16} /> Back to All Projects
             </Link>
 
-            <button
-              onClick={handleShare}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-blue-200/80 bg-white hover:border-accent text-muted-foreground hover:text-primary transition-all shadow-xs"
-            >
-              <Share2 size={13} /> Share Project
-            </button>
-          </div>
-
-          {/* Featured Product Hero Card (With Real Mockup Image) */}
-          <div className="bg-white border border-blue-100 rounded-3xl overflow-hidden shadow-xl mb-12">
-            <div className="relative w-full h-80 sm:h-[420px] bg-slate-900 overflow-hidden">
-              <img
-                src={projectImg}
-                alt={project.title}
-                className="w-full h-full object-cover object-center"
-                onError={(e) => {
-                  e.target.src = "/placeholder.svg";
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end p-6 sm:p-10">
-                <div className="text-white max-w-3xl">
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <span className="bg-accent text-accent-foreground font-mono text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-wider inline-block shadow-sm">
-                      {project.industry}
-                    </span>
-                    {Boolean(project.featured) && (
-                      <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-[10px] px-3 py-1 rounded-md shadow-sm inline-flex items-center gap-1.5 uppercase tracking-wider">
-                        <Sparkles size={11} className="fill-white" /> Featured Case Study
-                      </span>
-                    )}
-                  </div>
-                  <h1 className="text-2xl sm:text-4xl font-black leading-tight mb-2">
-                    {project.title}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-white/90 line-clamp-2">
-                    {project.subtitle || project.challenge}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Meta Strip */}
-            <div className="p-6 sm:p-8 grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-blue-100 bg-[#f9fcff]">
-              <div>
-                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Client</p>
-                <p className="text-sm font-bold text-primary mt-0.5">{project.client_name || "Confidential"}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Duration</p>
-                <p className="text-sm font-bold text-primary mt-0.5">{project.duration || "6 Months"}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Team Size</p>
-                <p className="text-sm font-bold text-primary mt-0.5">{project.team_size || "8 Developers"}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Live URL</p>
-                {project.live_url ? (
-                  <a
-                    href={project.live_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm font-bold text-accent hover:underline mt-0.5"
-                  >
-                    <span>Visit Live Site</span>
-                    <ExternalLink size={12} />
-                  </a>
-                ) : (
-                  <p className="text-sm font-bold text-muted-foreground mt-0.5">Enterprise Internal</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Key Metrics / Quantitative Impact */}
-          {(project.metrics || []).length > 0 && (
-            <div className="mb-14">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="w-8 h-1 bg-accent rounded" />
-                <h2 className="text-xl font-bold text-primary">Key Performance & Business Metrics</h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {(project.metrics || []).map((m, idx) => (
-                  <div
-                    key={idx}
-                    className="p-6 rounded-2xl bg-white border border-blue-100 shadow-sm text-center hover:border-accent/40 transition-colors"
-                  >
-                    <p className="text-3xl font-black text-accent">{m.value}</p>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-1">
-                      {m.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Key Project Highlights */}
-          {Array.isArray(project.key_highlights) && project.key_highlights.length > 0 && (
-            <div className="mb-14 bg-white border border-blue-100 rounded-3xl p-8 sm:p-10 shadow-sm">
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="text-accent" size={20} />
-                <h2 className="text-xl font-bold text-primary">Key Deliverables & Architectural Highlights</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {project.key_highlights.map((h, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-4 rounded-2xl bg-[#f0f7ff]/70 border border-blue-100/80">
-                    <CheckCircle2 size={18} className="text-accent shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground/90 font-medium leading-relaxed">{h}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Challenge & Solution Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14">
-            <div className="p-8 rounded-3xl bg-white border border-blue-100 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full mb-4 inline-block border border-rose-100">
-                Problem Statement
-              </span>
-              <h3 className="text-2xl font-bold text-primary mb-4">The Challenge</h3>
-              <p className="text-foreground/90 leading-relaxed text-sm sm:text-base whitespace-pre-line">
-                {project.challenge || "The client required high-performance software with specialized architecture to eliminate operational bottlenecks and meet stringent compliance standards."}
-              </p>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white border border-blue-100 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full mb-4 inline-block border border-emerald-100">
-                Engineering Delivery
-              </span>
-              <h3 className="text-2xl font-bold text-primary mb-4">Our Solution</h3>
-              <p className="text-foreground/90 leading-relaxed text-sm sm:text-base whitespace-pre-line">
-                {project.solution || "We designed a modern microservices architecture with optimized data structures, automated unit testing, and scalable cloud deployments."}
-              </p>
-            </div>
-          </div>
-
-          {/* Architecture & Engineering Details (If provided) */}
-          {project.architecture_details && (
-            <div className="p-8 sm:p-10 rounded-3xl bg-white border border-blue-100 shadow-sm mb-14">
-              <div className="flex items-center gap-2 mb-4">
-                <Server className="text-accent" size={20} />
-                <h3 className="text-xl font-bold text-primary">Deep Technical Architecture</h3>
-              </div>
-              <p className="text-foreground/90 leading-relaxed text-sm sm:text-base whitespace-pre-line">
-                {project.architecture_details}
-              </p>
-            </div>
-          )}
-
-          {/* Results & Value */}
-          {project.results && (
-            <div className="p-8 sm:p-10 rounded-3xl bg-accent/10 border border-accent/20 mb-14 shadow-xs">
-              <span className="text-xs font-bold uppercase tracking-wider text-accent bg-accent/15 px-3 py-1 rounded-full mb-3 inline-block">
-                Long-Term Value
-              </span>
-              <h3 className="text-2xl font-bold text-primary mb-3">Results & Business Outcomes</h3>
-              <p className="text-foreground/90 leading-relaxed text-base sm:text-lg">
-                {project.results}
-              </p>
-            </div>
-          )}
-
-          {/* Technology Stack Matrix */}
-          <div className="p-8 rounded-3xl bg-white border border-blue-100 shadow-sm mb-14">
-            <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-              <Cpu className="text-accent" size={20} /> Technology Stack & Tools Used
-            </h3>
-            <div className="flex flex-wrap gap-2.5">
-              {(project.technologies || []).map((tech, idx) => (
-                <span
-                  key={idx}
-                  className="text-sm font-mono font-medium px-4 py-2 rounded-xl bg-[#f0f7ff] text-primary border border-blue-200/70"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Project Specific FAQ Section (If populated from admin/DB) */}
-          {Array.isArray(project.faqs) && project.faqs.length > 0 && (
-            <div className="p-8 sm:p-10 rounded-3xl bg-white border border-blue-100 shadow-sm mb-16">
-              <div className="flex items-center gap-2 mb-6">
-                <HelpCircle className="text-accent" size={20} />
-                <h3 className="text-xl font-bold text-primary">Frequently Asked Questions</h3>
-              </div>
-              <div className="space-y-3">
-                {project.faqs.map((f, i) => {
-                  const isOpen = openFaq === i;
-                  return (
-                    <div key={i} className="border border-blue-100/80 rounded-2xl overflow-hidden">
-                      <button
-                        onClick={() => setOpenFaq(isOpen ? null : i)}
-                        className="w-full text-left px-5 py-3.5 flex items-center justify-between gap-4 font-bold text-sm text-primary hover:text-accent transition-colors bg-[#f9fcff]"
-                      >
-                        <span>{f.question}</span>
-                        <ChevronDown
-                          size={16}
-                          className={`text-accent shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                        />
-                      </button>
-                      {isOpen && (
-                        <div className="px-5 py-3 text-xs sm:text-sm text-muted-foreground leading-relaxed bg-white border-t border-blue-50">
-                          {f.answer}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Bottom CTA Box */}
-          <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-[#071a2f] to-[#0d2e53] text-white text-center shadow-xl">
-            <h3 className="text-2xl sm:text-3xl font-black mb-3">
-              Ready to Engineer Your Next Solution?
-            </h3>
-            <p className="text-sm sm:text-base text-white/80 max-w-xl mx-auto mb-6">
-              Connect with Dharamvir Info Tech engineers to discuss custom desktop software, web applications, or cloud platforms.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                to="/contact"
-                className="bg-accent text-accent-foreground font-bold px-6 py-3 rounded-xl hover:bg-accent/90 transition-all shadow-lg"
-              >
-                Discuss Your Project
-              </Link>
+            <div className="flex items-center gap-3">
               {project.live_url && (
                 <a
                   href={project.live_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-3 rounded-xl border border-white/20 transition-all inline-flex items-center gap-1.5"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-xs"
                 >
-                  <span>Visit {project.title.split("-")[0].trim()}</span>
-                  <ArrowUpRight size={16} />
+                  <span>Visit Live Website</span>
+                  <ExternalLink size={12} />
                 </a>
+              )}
+              <button
+                onClick={handleShare}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl border border-blue-200/80 bg-white hover:border-accent text-muted-foreground hover:text-primary transition-all shadow-xs"
+              >
+                <Share2 size={13} /> Share
+              </button>
+            </div>
+          </div>
+
+          {/* ─── MAIN EDITORIAL 2-COLUMN LAYOUT (Matching Reference Document Style) ─── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-5">
+            {/* LEFT SIDEBAR: Sticky Lead Inquiry Form & Quick Specs */}
+            <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+              <ProjectEnquiryCard
+                projectTitle={project.title}
+                projectSlug={project.slug}
+                clientName={project.client_name}
+              />
+
+              {/* Quick Project Meta Strip */}
+              <div className="bg-whites rounded-3xl p-6 borders border-blue-100s shadow-sm space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-accent font-mono">
+                  Project Metadata
+                </h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Client Organization</span>
+                    <span className="font-bold text-primary">{project.client_name || "Enterprise"}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Industry Vertical</span>
+                    <span className="font-bold text-accent">{project.industry}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Engagement Duration</span>
+                    <span className="font-bold text-primary">{project.duration || "6 Months"}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-slate-500">Engineering Team</span>
+                    <span className="font-bold text-primary">{project.team_size || "8 Engineers"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Rich Case Study Technical Document */}
+            <div className="lg:col-span-8 bg-white/95s rounded-3xl p-6 sm:p-10 lg:p-12 borders border-blue-100s shadow-xls space-y-8">
+              {/* Header Headline */}
+              <div>
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className="bg-accent/10 text-accent font-mono text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-accent/20">
+                    {project.industry}
+                  </span>
+                  {Boolean(project.featured) && (
+                    <span className="bg-amber-500/10 text-amber-600 font-bold text-[10px] px-3 py-1 rounded-full border border-amber-500/20 inline-flex items-center gap-1">
+                      <Sparkles size={11} /> Featured Case Study
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-primary leading-tight">
+                  {project.title}
+                </h1>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  {project.subtitle}
+                </p>
+              </div>
+
+              {/* Cover Showcase Image */}
+              <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-slate-200/80 shadow-md">
+                <img
+                  src={projectImg}
+                  alt={project.title}
+                  className="w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    e.target.src = "/placeholder.svg";
+                  }}
+                />
+              </div>
+
+              {/* 1. Approach Section */}
+              <div className="space-y-2">
+                <h3 className="text-base sm:text-lg font-black text-primary flex items-center gap-2">
+                  <Target size={18} className="text-accent" /> Approach:
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  {approachText}
+                </p>
+              </div>
+
+              {/* 2. Overview Section */}
+              <div className="space-y-2">
+                <h3 className="text-base sm:text-lg font-black text-primary flex items-center gap-2">
+                  <FileCheck2 size={18} className="text-accent" /> Overview:
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  {overviewText}
+                </p>
+              </div>
+
+              {/* 3. Two-Column Split: Key Features & Return on Investment */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                {/* Key Features */}
+                <div className="space-y-3">
+                  <h3 className="text-base sm:text-lg font-black text-primary flex items-center gap-2">
+                    <ShieldCheck size={18} className="text-accent" /> Key Features:
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {keyFeaturesList.map((feat, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Return On Investment */}
+                <div className="space-y-3">
+                  <h3 className="text-base sm:text-lg font-black text-primary flex items-center gap-2">
+                    <TrendingUp size={18} className="text-emerald-600" /> Return Of Investment:
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {roiList.map((roi, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />
+                        <span>{roi}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* 4. What They Gained */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-base sm:text-lg font-black text-primary flex items-center gap-2">
+                  <Award size={18} className="text-amber-500" /> What They Gained:
+                </h3>
+                <ul className="space-y-2.5">
+                  {gainedList.map((gain, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                      <CheckCircle2 size={16} className="text-accent mt-0.5 shrink-0" />
+                      <span>{gain}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 5. Deep Technical Architecture Details */}
+              {project.architecture_details && (
+                <div className="p-6 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-2">
+                  <h4 className="text-sm font-bold text-primary flex items-center gap-2">
+                    <Server size={16} className="text-accent" /> Deep Technical Architecture
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                    {project.architecture_details}
+                  </p>
+                </div>
+              )}
+
+              {/* 6. Technology Stack With Official React-Icons */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-base sm:text-lg font-black text-primary flex items-center gap-2">
+                  <Cpu size={18} className="text-accent" /> Technologies Used:
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {(project.technologies || []).map((tech, idx) => {
+                    const iconInfo = getTechIconInfo(tech);
+                    const TechIcon = iconInfo.icon;
+                    return (
+                      <div
+                        key={idx}
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-blue-200/80 shadow-2xs hover:border-accent/50 transition-colors"
+                      >
+                        <TechIcon size={18} className={iconInfo.color} />
+                        <span className="text-xs font-bold text-primary font-mono">{tech}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 7. Frequently Asked Questions (Accordion) */}
+              {Array.isArray(project.faqs) && project.faqs.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle size={18} className="text-accent" />
+                    <h3 className="text-base sm:text-lg font-black text-primary">
+                      Frequently Asked Questions ({project.title.split("-")[0].trim()})
+                    </h3>
+                  </div>
+                  <div className="space-y-2.5">
+                    {project.faqs.map((f, i) => {
+                      const isOpen = openFaq === i;
+                      return (
+                        <div key={i} className="border border-blue-100/90 rounded-2xl overflow-hidden">
+                          <button
+                            onClick={() => setOpenFaq(isOpen ? null : i)}
+                            className="w-full text-left px-5 py-3.5 flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-primary hover:text-accent transition-colors bg-[#f9fcff]"
+                          >
+                            <span>{f.question}</span>
+                            <ChevronDown
+                              size={16}
+                              className={`text-accent shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                          {isOpen && (
+                            <div className="px-5 py-3 text-xs sm:text-sm text-muted-foreground leading-relaxed bg-white border-t border-blue-50">
+                              {f.answer}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           </div>

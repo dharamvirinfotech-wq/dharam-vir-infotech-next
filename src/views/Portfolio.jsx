@@ -11,6 +11,7 @@ const Portfolio = () => {
       <PortfolioSection />
       <CTASection />
       <Footer />
-    </div>);
+    </div>
+  );
 };
 export default Portfolio;

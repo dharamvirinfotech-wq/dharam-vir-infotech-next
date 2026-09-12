@@ -18,7 +18,7 @@ async function run() {
       results: 'Over 1M+ active users, 100% data integrity SLA, 4.9/5 satisfaction rating across 50+ conversion tools.',
       live_url: 'https://windowsutils.com',
       metrics: JSON.stringify([
-        { label: 'Active Users', value: '1M+' },
+        { label: 'Active Users', value: '500+' },
         { label: 'File Formats', value: '25+' },
         { label: 'Data Loss Rate', value: '0%' },
         { label: 'Tools Built', value: '50+' }

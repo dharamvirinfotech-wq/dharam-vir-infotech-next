@@ -3,11 +3,11 @@ export const navLinks = [
     { label: "Home", href: "/" },
     { label: "Services", href: "/services", hasMega: "services" },
     { label: "About", href: "/about" },
-    { label: "Who We Are", href: "/about", hasMega: "explore" },
+    { label: "Who We Are", href: "/career", hasMega: "explore" },
     { label: "Portfolio", href: "/portfolio" },
 ];
 export const megaExplore = [
-    { icon: Info, title: "About Us", desc: "Our company story, mission & vision", href: "/about" },
+    // { icon: Info, title: "About Us", desc: "Our company story, mission & vision", href: "/about" },
     { icon: Briefcase, title: "Career", desc: "Explore open roles & join our team", href: "/career" },
     { icon: BookOpen, title: "Case Studies", desc: "Client success stories & results", href: "/portfolio" },
     { icon: BookOpen, title: "Blogs", desc: "Tech insights, articles & news", href: "/blog" },
