@@ -1,15 +1,31 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, ExternalLink, Loader2, Globe, Sparkles, FolderKanban } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  ExternalLink,
+  Loader2,
+  Globe,
+  FolderKanban,
+  Star,
+  MoreVertical,
+  HelpCircle,
+} from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { caseStudiesApi } from "@/lib/api";
+import ProjectImageUploader from "@/components/admin/ProjectImageUploader";
+import ProjectFaqBuilder from "@/components/admin/ProjectFaqBuilder";
+import ProjectEditorialFields from "@/components/admin/ProjectEditorialFields";
+import { getFallbackProjectBySlug } from "@/utils/portfolioData";
 
 const emptyForm = {
   slug: "",
@@ -23,10 +39,15 @@ const emptyForm = {
   services: "",
   challenge: "",
   solution: "",
+  approach: "",
+  overview: "",
+  key_features: "",
+  roi_metrics: "",
+  what_they_gained: "",
   architecture_details: "",
   results: "",
   key_highlights: "",
-  faqs: "",
+  faqsList: [],
   live_url: "",
   cover_image: "",
   metrics: "",
@@ -46,6 +67,11 @@ const AdminPortfolio = () => {
   const [formData, setFormData] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Collapsible sections state
+  const [editorialCollapsed, setEditorialCollapsed] = useState(false);
+  const [faqCollapsed, setFaqCollapsed] = useState(false);
+
   const { toast } = useToast();
 
   const load = async () => {
@@ -81,32 +107,77 @@ const AdminPortfolio = () => {
 
   const handleCreate = () => {
     setEditing(null);
-    setFormData(emptyForm);
+    setFormData({
+      ...emptyForm,
+      faqsList: [{ question: "", answer: "" }],
+    });
+    setEditorialCollapsed(false);
+    setFaqCollapsed(false);
     setDialogOpen(true);
   };
 
   const handleEdit = (p) => {
     setEditing(p);
+
+    // Merge with fallback data if database row doesn't have editorial fields yet
+    const fallback = getFallbackProjectBySlug(p.slug) || {};
+
+    let parsedFaqs = [];
+    if (Array.isArray(p.faqs) && p.faqs.length > 0) {
+      parsedFaqs = p.faqs.map((f) => ({ question: f.question || "", answer: f.answer || "" }));
+    } else if (Array.isArray(fallback.faqs) && fallback.faqs.length > 0) {
+      parsedFaqs = fallback.faqs.map((f) => ({ question: f.question || "", answer: f.answer || "" }));
+    }
+
+    if (parsedFaqs.length === 0) {
+      parsedFaqs = [{ question: "", answer: "" }];
+    }
+
+    const keyFeaturesVal = Array.isArray(p.key_features) && p.key_features.length > 0
+      ? p.key_features.join("\n")
+      : Array.isArray(fallback.key_features)
+      ? fallback.key_features.join("\n")
+      : (p.key_features || "");
+
+    const roiVal = Array.isArray(p.roi_metrics) && p.roi_metrics.length > 0
+      ? p.roi_metrics.join("\n")
+      : Array.isArray(fallback.roi_metrics)
+      ? fallback.roi_metrics.join("\n")
+      : (p.roi_metrics || "");
+
+    const gainedVal = Array.isArray(p.what_they_gained) && p.what_they_gained.length > 0
+      ? p.what_they_gained.join("\n")
+      : Array.isArray(fallback.what_they_gained)
+      ? fallback.what_they_gained.join("\n")
+      : (p.what_they_gained || "");
+
     setFormData({
       slug: p.slug,
       title: p.title,
-      subtitle: p.subtitle || "",
-      client_name: p.client_name || "",
-      industry: p.industry || "Web Engineering",
-      duration: p.duration || "",
-      team_size: p.team_size || "",
-      technologies: (p.technologies || []).join(", "),
-      services: (p.services || []).join(", "),
-      challenge: p.challenge || "",
-      solution: p.solution || "",
-      architecture_details: p.architecture_details || "",
-      results: p.results || "",
-      key_highlights: Array.isArray(p.key_highlights) ? p.key_highlights.join("\n") : "",
-      faqs: Array.isArray(p.faqs)
-        ? p.faqs.map((f) => `${f.question} | ${f.answer}`).join("\n")
+      subtitle: p.subtitle || fallback.subtitle || "",
+      client_name: p.client_name || fallback.client_name || "",
+      industry: p.industry || fallback.industry || "Web Engineering",
+      duration: p.duration || fallback.duration || "",
+      team_size: p.team_size || fallback.team_size || "",
+      technologies: (p.technologies || fallback.technologies || []).join(", "),
+      services: (p.services || fallback.services || []).join(", "),
+      challenge: p.challenge || fallback.challenge || "",
+      solution: p.solution || fallback.solution || "",
+      approach: p.approach || fallback.approach || "",
+      overview: p.overview || fallback.overview || "",
+      key_features: keyFeaturesVal,
+      roi_metrics: roiVal,
+      what_they_gained: gainedVal,
+      architecture_details: p.architecture_details || fallback.architecture_details || "",
+      results: p.results || fallback.results || "",
+      key_highlights: Array.isArray(p.key_highlights) && p.key_highlights.length > 0
+        ? p.key_highlights.join("\n")
+        : Array.isArray(fallback.key_highlights)
+        ? fallback.key_highlights.join("\n")
         : "",
-      live_url: p.live_url || "",
-      cover_image: p.cover_image || "",
+      faqsList: parsedFaqs,
+      live_url: p.live_url || fallback.live_url || "",
+      cover_image: p.cover_image || fallback.cover_image || "",
       metrics: Array.isArray(p.metrics)
         ? p.metrics.map((m) => `${m.label}: ${m.value}`).join(", ")
         : "",
@@ -114,6 +185,9 @@ const AdminPortfolio = () => {
       status: p.status || "published",
       featured: !!p.featured,
     });
+
+    setEditorialCollapsed(false);
+    setFaqCollapsed(false);
     setDialogOpen(true);
   };
 
@@ -138,36 +212,49 @@ const AdminPortfolio = () => {
 
     const metricsArray = formData.metrics
       ? formData.metrics
-        .split(",")
-        .map((item) => {
-          const parts = item.split(":");
-          if (parts.length >= 2) {
-            return { label: parts[0].trim(), value: parts.slice(1).join(":").trim() };
-          }
-          return null;
-        })
-        .filter(Boolean)
-      : [];
-
-    const faqsArray = formData.faqs
-      ? formData.faqs
-        .split("\n")
-        .map((line) => {
-          const parts = line.split("|");
-          if (parts.length >= 2) {
-            return { question: parts[0].trim(), answer: parts.slice(1).join("|").trim() };
-          }
-          return null;
-        })
-        .filter(Boolean)
+          .split(",")
+          .map((item) => {
+            const parts = item.split(":");
+            if (parts.length >= 2) {
+              return { label: parts[0].trim(), value: parts.slice(1).join(":").trim() };
+            }
+            return null;
+          })
+          .filter(Boolean)
       : [];
 
     const highlightsArray = formData.key_highlights
       ? formData.key_highlights
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean)
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
+
+    const featuresArray = formData.key_features
+      ? formData.key_features
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const roiArray = formData.roi_metrics
+      ? formData.roi_metrics
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const gainedArray = formData.what_they_gained
+      ? formData.what_they_gained
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    // Filter valid FAQs
+    const validFaqs = (formData.faqsList || [])
+      .filter((f) => f.question && f.question.trim().length > 0)
+      .map((f) => ({ question: f.question.trim(), answer: (f.answer || "").trim() }));
 
     const payload = {
       slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
@@ -181,10 +268,15 @@ const AdminPortfolio = () => {
       services: toList(formData.services),
       challenge: formData.challenge,
       solution: formData.solution,
+      approach: formData.approach,
+      overview: formData.overview,
+      key_features: featuresArray,
+      roi_metrics: roiArray,
+      what_they_gained: gainedArray,
       architecture_details: formData.architecture_details,
       results: formData.results,
       key_highlights: highlightsArray,
-      faqs: faqsArray,
+      faqs: validFaqs,
       live_url: formData.live_url,
       cover_image: formData.cover_image,
       metrics: metricsArray,
@@ -196,7 +288,7 @@ const AdminPortfolio = () => {
     try {
       if (editing) {
         await caseStudiesApi.update(editing.id, payload);
-        toast({ title: "Updated", description: "Portfolio project updated successfully." });
+        toast({ title: "Updated", description: "Portfolio project & case study details updated." });
       } else {
         await caseStudiesApi.create(payload);
         toast({ title: "Created", description: "New portfolio project created successfully." });
@@ -217,301 +309,362 @@ const AdminPortfolio = () => {
   const industries = ["all", ...new Set(items.map((i) => i.industry).filter(Boolean))];
 
   return (
-    <AdminLayout title="Portfolio & Work Management bg-background">
+    <AdminLayout
+      title="Portfolio & Case Studies"
+      subtitle="Manage projects, live URLs, FAQs, and full technical editorial content"
+      icon={FolderKanban}
+    >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <FolderKanban className="text-accent" size={24} />
-              Portfolio & Featured Projects
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Manage client projects, live URLs (e.g. windowsutils.com, fairsearches.com), tech stacks, and case studies.
-            </p>
-          </div>
-          <Button onClick={handleCreate} className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0">
-            <Plus size={16} className="mr-2" /> Add New Project
-          </Button>
+        {/* Top Header Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {[
+            { label: "Total Projects", value: items.length, color: "text-slate-900 dark:text-white" },
+            { label: "Published Live", value: items.filter((c) => c.status === "published").length, color: "text-emerald-600" },
+            { label: "Draft Hidden", value: items.filter((c) => c.status === "draft").length, color: "text-amber-500" },
+            { label: "Featured Projects", value: items.filter((c) => c.featured).length, color: "text-blue-600" },
+          ].map((s) => (
+            <Card key={s.label} className="border-border bg-white dark:bg-slate-900 shadow-xs">
+              <CardContent className="p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                <p className={`text-2xl font-black mt-1 ${s.color}`}>{s.value}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Filters */}
-        <Card className="border-border bg-card">
+        {/* Toolbar & Filters */}
+        <Card className="border-border bg-white dark:bg-slate-900 shadow-xs">
           <CardContent className="p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-              <Input
-                placeholder="Search projects, client, tech..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-background"
-              />
+            <div className="flex flex-1 flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                <Input
+                  placeholder="Search projects, client, tech..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 text-xs bg-background"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={filterIndustry} onValueChange={setFilterIndustry}>
+                  <SelectTrigger className="w-full sm:w-[180px] text-xs bg-background">
+                    <SelectValue placeholder="Industry Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industries.map((ind) => (
+                      <SelectItem key={ind} value={ind} className="text-xs">
+                        {ind === "all" ? "All Industries" : ind}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Select value={filterIndustry} onValueChange={setFilterIndustry}>
-                <SelectTrigger className="w-[180px] bg-background">
-                  <SelectValue placeholder="Industry Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {industries.map((ind) => (
-                    <SelectItem key={ind} value={ind}>
-                      {ind === "all" ? "All Industries" : ind}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
+            <Button onClick={handleCreate} className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 text-xs font-bold gap-2">
+              <Plus size={16} /> Add New Project
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Project Grid */}
-        {loading ? (
-          <div className="py-24 flex items-center justify-center gap-2 text-muted-foreground">
-            <Loader2 className="animate-spin text-accent" size={24} />
-            <span>Loading projects...</span>
-          </div>
-        ) : filtered.length === 0 ? (
-          <Card className="border-dashed border-border bg-card/50 p-12 text-center">
-            <FolderKanban className="mx-auto text-muted-foreground mb-3" size={40} />
-            <h3 className="font-bold text-foreground mb-1">No Projects Found</h3>
-            <p className="text-sm text-muted-foreground mb-4">Add your first project to showcase on the portfolio page.</p>
-            <Button onClick={handleCreate} variant="outline">
-              <Plus size={16} className="mr-2" /> Add Project
-            </Button>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((p) => (
-              <Card
-                key={p.id}
-                className="border-border bg-card overflow-hidden hover:border-accent/40 transition-all duration-200 flex flex-col justify-between"
-              >
-                <div className="p-6">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
-                      {p.industry || "General"}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {p.featured && (
-                        <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Sparkles size={11} /> Featured
-                        </span>
-                      )}
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === "published"
-                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                            : "bg-muted text-muted-foreground border border-border"
-                          }`}
-                      >
-                        {p.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg text-foreground mb-1 line-clamp-1">{p.title}</h3>
-                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                    {p.subtitle || p.challenge || "No description provided."}
-                  </p>
-
-                  {p.live_url && (
-                    <a
-                      href={p.live_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-accent font-semibold hover:underline mb-4"
-                    >
-                      <Globe size={13} /> {p.live_url.replace("https://", "").replace("http://", "")}
-                      <ExternalLink size={11} />
-                    </a>
-                  )}
-
-                  {/* Tech stack */}
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {(p.technologies || []).slice(0, 4).map((tech, idx) => (
-                      <span key={idx} className="text-[10px] bg-muted/60 text-muted-foreground px-2 py-0.5 rounded border border-border">
-                        {tech}
-                      </span>
+        {/* Table View (Clean & Compact) */}
+        <Card className="border-border bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="py-20 text-center flex items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="animate-spin text-accent" size={20} /> Loading projects...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground">
+                <FolderKanban className="mx-auto mb-2 text-slate-300" size={36} />
+                <p className="font-semibold">No portfolio projects found</p>
+                <p className="text-xs mt-1">Try clearing filters or click "Add New Project".</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr className="border-b border-border bg-slate-50/80 dark:bg-slate-800/40 text-[11px] uppercase tracking-wider text-muted-foreground font-bold">
+                      <th className="py-3 px-4">Project & Slug</th>
+                      <th className="py-3 px-4">Client / Industry</th>
+                      <th className="py-3 px-4">Live URL</th>
+                      <th className="py-3 px-4">Tech Stack</th>
+                      <th className="py-3 px-4 text-center">FAQs</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-center">Featured</th>
+                      <th className="text-right py-3 px-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border text-xs">
+                    {filtered.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="py-3.5 px-4 max-w-[220px]">
+                          <p className="font-bold text-slate-900 dark:text-white truncate">{p.title}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono truncate">{p.slug}</p>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                          <p className="font-medium text-slate-900 dark:text-white">{p.client_name || "—"}</p>
+                          <span className="inline-block mt-0.5 text-[10px] bg-accent/10 text-accent font-semibold px-2 py-0.5 rounded-full">
+                            {p.industry || "General"}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500">
+                          {p.live_url ? (
+                            <a
+                              href={p.live_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-accent hover:underline flex items-center gap-1 font-mono text-[11px]"
+                            >
+                              <Globe size={12} /> {p.live_url.replace("https://", "").replace("http://", "").replace(/\/$/, "")}
+                            </a>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex flex-wrap gap-1 max-w-[200px]">
+                            {(p.technologies || []).slice(0, 3).map((t, idx) => (
+                              <span key={idx} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
+                                {t}
+                              </span>
+                            ))}
+                            {(p.technologies || []).length > 3 && (
+                              <span className="text-[10px] text-muted-foreground">+{p.technologies.length - 3}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 font-mono">
+                            <HelpCircle size={12} className="text-accent" />
+                            {Array.isArray(p.faqs) ? p.faqs.length : 0}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              p.status === "published"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          {p.featured ? (
+                            <Star size={15} className="text-amber-500 fill-amber-500 mx-auto" />
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="text-xs">
+                              {p.status === "published" && (
+                                <DropdownMenuItem asChild>
+                                  <a
+                                    href={`/portfolio/${p.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <ExternalLink size={14} /> View Case Study
+                                  </a>
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => handleEdit(p)} className="gap-2 cursor-pointer">
+                                <Edit size={14} /> Edit Project & Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(p.id, p.title)}
+                                className="gap-2 text-destructive cursor-pointer"
+                              >
+                                <Trash2 size={14} /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
                     ))}
-                    {(p.technologies || []).length > 4 && (
-                      <span className="text-[10px] text-muted-foreground px-1 py-0.5">
-                        +{p.technologies.length - 4}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                {/* Footer Controls */}
-                <div className="px-6 py-3 border-t border-border/80 bg-muted/20 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{p.client_name || "Confidential"}</span>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(p)} className="h-8 px-2 text-xs">
-                      <Edit size={14} className="mr-1" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(p.id, p.title)}
-                      className="h-8 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Create / Edit Dialog */}
+        {/* ─── ADD / EDIT DIALOG (Clean Modular Components) ─── */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editing ? "Edit Portfolio Project" : "Add Portfolio Project"}</DialogTitle>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <FolderKanban className="text-accent" size={20} />
+                {editing ? `Edit Project: ${editing.title}` : "Add New Case Study Project"}
+              </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Project Title *</Label>
-                  <Input
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="WindowsUtils.com - Desktop Utility Suite"
-                  />
-                </div>
-                <div>
-                  <Label>URL Slug (Unique) *</Label>
-                  <Input
-                    required
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="windowsutils"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <Label>Tagline / Subtitle</Label>
-                <Input
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  placeholder="Engineered high-speed desktop & cloud email conversion suite"
+            <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+              {/* Section 1: Basic Information */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-border space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-accent font-mono">1. Basic Information</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Project Title *</Label>
+                    <Input
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g. WindowsUtils - Desktop Suite"
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">URL Slug (e.g. windowsutils)</Label>
+                    <Input
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      placeholder="auto-generated-from-title"
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-semibold">Subtitle / Hero Tagline</Label>
+                  <Input
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                    placeholder="Short high-impact subtitle describing transformation or scale"
+                    className="text-xs"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Client Name</Label>
+                    <Input
+                      value={formData.client_name}
+                      onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                      placeholder="e.g. WindowsUtils Inc."
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Industry / Category</Label>
+                    <Input
+                      value={formData.industry}
+                      onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                      placeholder="e.g. Software & Tools, Marketplace"
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Live URL</Label>
+                    <Input
+                      value={formData.live_url}
+                      onChange={(e) => setFormData({ ...formData, live_url: e.target.value })}
+                      placeholder="https://windowsutils.com"
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Project Duration</Label>
+                    <Input
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      placeholder="e.g. 6 months"
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Team Size</Label>
+                    <Input
+                      value={formData.team_size}
+                      onChange={(e) => setFormData({ ...formData, team_size: e.target.value })}
+                      placeholder="e.g. 6 Engineers"
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Cover Image Uploader Component */}
+                <ProjectImageUploader
+                  value={formData.cover_image}
+                  onChange={(val) => setFormData({ ...formData, cover_image: val })}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <Label>Client Name</Label>
-                  <Input
-                    value={formData.client_name}
-                    onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                    placeholder="e.g. WindowsUtils Inc."
-                  />
-                </div>
-                <div>
-                  <Label>Industry / Category</Label>
-                  <Input
-                    value={formData.industry}
-                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                    placeholder="e.g. Software & Tools, CleanTech"
-                  />
-                </div>
-                <div>
-                  <Label>Live Website URL</Label>
-                  <Input
-                    value={formData.live_url}
-                    onChange={(e) => setFormData({ ...formData, live_url: e.target.value })}
-                    placeholder="https://windowsutils.com"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Technologies (comma separated)</Label>
-                  <Input
-                    value={formData.technologies}
-                    onChange={(e) => setFormData({ ...formData, technologies: e.target.value })}
-                    placeholder="Next.js, Node.js, PostgreSQL, AWS"
-                  />
-                </div>
-                <div>
-                  <Label>Key Metrics (Format: Label: Value, Label: Value)</Label>
-                  <Input
-                    value={formData.metrics}
-                    onChange={(e) => setFormData({ ...formData, metrics: e.target.value })}
-                    placeholder="Active Users: 1M+, Data Loss: 0%, Rating: 4.9"
-                  />
+              {/* Section 2: Tech Stack & Benchmarks */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-border space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-accent font-mono">2. Tech Stack & Benchmarks</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Technologies (Comma separated)</Label>
+                    <Input
+                      value={formData.technologies}
+                      onChange={(e) => setFormData({ ...formData, technologies: e.target.value })}
+                      placeholder="React, Next.js, Node.js, C++, AWS, Docker, PostgreSQL"
+                      className="text-xs font-mono"
+                    />
+                    <span className="text-[10px] text-muted-foreground mt-1 block">
+                      * Real official brand icons will automatically display on the Details page!
+                    </span>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Key Metrics (Label: Value, Label: Value)</Label>
+                    <Input
+                      value={formData.metrics}
+                      onChange={(e) => setFormData({ ...formData, metrics: e.target.value })}
+                      placeholder="Active Users: 1M+, Latency: <80ms, Data Loss: 0%"
+                      className="text-xs font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label>The Challenge / Problem</Label>
-                <Textarea
-                  rows={2}
-                  value={formData.challenge}
-                  onChange={(e) => setFormData({ ...formData, challenge: e.target.value })}
-                  placeholder="What problem did the client face?"
-                />
-              </div>
+              {/* Section 3: Modular Collapsible Editorial Content (Approach, Overview, Key Features, ROI, Gained) */}
+              <ProjectEditorialFields
+                formData={formData}
+                onChange={setFormData}
+                isCollapsed={editorialCollapsed}
+                onToggleCollapse={() => setEditorialCollapsed((c) => !c)}
+              />
 
-              <div>
-                <Label>Our Solution</Label>
-                <Textarea
-                  rows={2}
-                  value={formData.solution}
-                  onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
-                  placeholder="How did our engineering team solve it?"
-                />
-              </div>
+              {/* Section 4: Modular Collapsible FAQ Builder */}
+              <ProjectFaqBuilder
+                faqs={formData.faqsList || []}
+                onChange={(list) => setFormData({ ...formData, faqsList: list })}
+                isCollapsed={faqCollapsed}
+                onToggleCollapse={() => setFaqCollapsed((c) => !c)}
+              />
 
-              <div>
-                <Label>Technical Architecture Details</Label>
-                <Textarea
-                  rows={3}
-                  value={formData.architecture_details}
-                  onChange={(e) => setFormData({ ...formData, architecture_details: e.target.value })}
-                  placeholder="Key engineering highlights, streaming algorithms, caching layers, database schemas..."
-                />
-              </div>
-
-              <div>
-                <Label>Key Highlights (One per line)</Label>
-                <Textarea
-                  rows={2}
-                  value={formData.key_highlights}
-                  onChange={(e) => setFormData({ ...formData, key_highlights: e.target.value })}
-                  placeholder="100% Offline Processing&#10;Court-admissible Bates headers&#10;Sub-80ms search latency"
-                />
-              </div>
-
-              <div>
-                <Label>Project FAQs (Format: Question? | Answer (one per line))</Label>
-                <Textarea
-                  rows={3}
-                  value={formData.faqs}
-                  onChange={(e) => setFormData({ ...formData, faqs: e.target.value })}
-                  placeholder="Is internet required? | No, all operations execute locally on the device.&#10;Does it support batch conversion? | Yes, up to gigabytes of data can be batch converted."
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Status & Featured */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div>
-                  <Label>Status</Label>
+                  <Label className="text-xs font-semibold">Publishing Status</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(val) => setFormData({ ...formData, status: val })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-xs">
                       <SelectItem value="published">Published (Live on Website)</SelectItem>
                       <SelectItem value="draft">Draft (Hidden)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2 pt-6">
+                <div className="flex items-center gap-2 pt-4">
                   <input
                     type="checkbox"
                     id="featured-check"
@@ -519,18 +672,19 @@ const AdminPortfolio = () => {
                     onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                     className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
                   />
-                  <Label htmlFor="featured-check" className="cursor-pointer font-medium">
-                    Feature on Home & Top of Portfolio
+                  <Label htmlFor="featured-check" className="cursor-pointer font-medium text-xs">
+                    Feature on Home & Top of Portfolio Showcase
                   </Label>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="text-xs">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                  {saving ? "Saving..." : editing ? "Update Project" : "Create Project"}
+                <Button type="submit" disabled={saving} className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-bold">
+                  {saving ? "Saving..." : editing ? "Update Project & Details" : "Create Project"}
                 </Button>
               </div>
             </form>
@@ -542,3 +696,4 @@ const AdminPortfolio = () => {
 };
 
 export default AdminPortfolio;
+

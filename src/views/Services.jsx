@@ -1,157 +1,128 @@
+import React from "react";
 import AnimatedNavbar from "@/components/AnimatedNavbar";
 import PageBanner from "@/components/PageBanner";
 import CTASection from "@/components/CTASection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
-import { Globe, Smartphone, Brain, ShoppingCart, Code2, Users, CheckCircle, ArrowRight, } from "lucide-react";
-const services = [
-  {
-    icon: Globe,
-    title: "Web & Software Development",
-    desc: "Custom software and web applications built for performance, security, and growth. We craft solutions that align with your business goals and scale with your success.",
-    items: [
-      "Enterprise Software Solutions",
-      "CRM & ERP Development",
-      "Responsive Website Design",
-      "API Development & Integration",
-      "Cloud-Based Applications",
-      "Maintenance & Support",
-    ],
-  },
-  {
-    icon: Smartphone,
-    title: "Mobile App Development",
-    desc: "High-performing mobile apps that function smoothly across all platforms. From concept to deployment, we build apps users love.",
-    items: [
-      "Android & iOS Native Apps",
-      "Cross-Platform Development",
-      "UI/UX for Mobile",
-      "App Store Deployment",
-      "App Performance Optimization",
-      "Post-Launch Support",
-    ],
-  },
-  {
-    icon: Brain,
-    title: "AI & ML Development",
-    desc: "Advanced AI and machine learning solutions to transform operations, automate workflows, and deliver actionable insights.",
-    items: [
-      "Custom AI Solutions",
-      "Chatbot Development",
-      "Generative AI Integration",
-      "Predictive Modeling",
-      "Natural Language Processing",
-      "Computer Vision Solutions",
-    ],
-  },
-  {
-    icon: ShoppingCart,
-    title: "E-commerce Solutions",
-    desc: "Engaging, secure, and scalable online stores that drive conversions and build customer loyalty across all channels.",
-    items: [
-      "Custom Store Development",
-      "Platform Integration (Shopify, WooCommerce)",
-      "Payment Gateway Setup",
-      "Inventory Management Systems",
-      "Multi-Vendor Marketplaces",
-      "Maintenance & Support",
-    ],
-  },
-  {
-    icon: Code2,
-    title: "Software Product Engineering",
-    desc: "End-to-end software services to guide your project from prototype to live launch with quality at every stage.",
-    items: [
-      "MVP Development",
-      "Progressive Web Apps",
-      "UI/UX Design & Prototyping",
-      "App Modernization",
-      "Quality Assurance & Testing",
-      "DevOps & CI/CD Pipelines",
-    ],
-  },
-  {
-    icon: Users,
-    title: "Dedicated Teams",
-    desc: "On-demand access to skilled developers and engineers for seamless project scaling without the overhead.",
-    items: [
-      "Offshore Development Teams",
-      "Staff Augmentation",
-      "Hire Dedicated Developers",
-      "Agile Team Integration",
-      "Project-Based Teams",
-      "Managed IT Services",
-    ],
-  },
-];
+import WhyChooseServices from "@/components/WhyChooseServices";
+import FaqSection from "@/components/FaqSection";
+import SectionHeader from "@/components/SectionHeader";
+import { allServices, servicesFaqsData } from "@/data/services-data";
+import { Link } from "@/lib/router-compat";
+import { ArrowRight } from "lucide-react";
+
 const Services = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-foreground selection:bg-accent selection:text-white">
       <AnimatedNavbar />
-      <PageBanner title="Our Services" subtitle="Full-cycle digital services to design, build, and support your business growth with cutting-edge technology solutions." breadcrumb="Services" />
 
-      {/* Services Detail Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="space-y-20">
-            {services.map((service, index) => (<div key={service.title} className={`flex flex-col lg:flex-row gap-10 items-center ${index % 2 !== 0 ? "lg:flex-row-reverse" : ""}`}>
-              {/* Content */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <service.icon className="text-accent" size={28} />
+      {/* Hero Banner with Modern Title and Breadcrumbs */}
+      <PageBanner
+        title="Our Services & Solutions"
+        subtitle="Empowering modern enterprises with state-of-the-art custom software, cloud architectures, AI automation, and agile engineering squads."
+        breadcrumb="Services"
+      />
+
+      {/* Main Services Section - Clean Card Grid with Direct Click to Details */}
+      <section className="py-16 lg:py-20 relative">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Section Header matching Home Page & Service Details Styling */}
+          <SectionHeader
+            badge="FULL-CYCLE SOLUTIONS"
+            titlePrefix="End-to-End"
+            titleHighlight="Specialized Capabilities"
+            description="Tailored software engineering services designed to modernize legacy workflows, scale digital products, and deliver measurable business ROI."
+            centered={true}
+            className="mb-14"
+          />
+
+          {/* Simple & Clean Services Cards Grid (Clickable to Details Page) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {allServices.map((service, index) => {
+              const ServiceIcon = service.icon;
+
+              return (
+                <Link
+                  key={service.id || index}
+                  to={service.link || `/services/${service.slug}`}
+                  className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800/90 shadow-sm hover:shadow-2xl hover:border-accent/60 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative cursor-pointer"
+                >
+                  <div>
+                    {/* Top Image Banner with Subtle Gradient */}
+                    <div className="relative h-52 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+                      {/* Top Right Service Badge */}
+                      {service.badge && (
+                        <div className="absolute top-4 right-4 z-10">
+                          <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider font-mono bg-white/95 dark:bg-slate-900/95 text-primary dark:text-white shadow-md border border-white/20 backdrop-blur-xs">
+                            {service.badge}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Overlapping Floating Circular Icon */}
+                    <div className="relative flex justify-center -mt-8 z-20">
+                      <div
+                        className={`w-16 h-16 rounded-full ${
+                          service.iconBg || "bg-accent text-white"
+                        } shadow-lg ring-4 ring-white dark:ring-slate-900 flex items-center justify-center group-hover:bg-accent group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}
+                      >
+                        <ServiceIcon size={26} strokeWidth={2.2} />
+                      </div>
+                    </div>
+
+                    {/* Clean Card Title */}
+                    <div className="p-6 pt-4 text-center">
+                      <h3 className="text-xl font-bold text-primary dark:text-white tracking-tight group-hover:text-accent transition-colors">
+                        {service.title}
+                      </h3>
+                    </div>
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-primary">
-                    {service.title}
-                  </h2>
-                </div>
-                <p className="text-muted-foreground leading-relaxed mb-6">
-                  {service.desc}
-                </p>
-                <ul className="grid sm:grid-cols-2 gap-3 mb-6">
-                  {service.items.map((item) => (<li key={item} className="flex items-center gap-2 text-sm text-foreground/80">
-                    <CheckCircle className="text-accent flex-shrink-0" size={16} />
-                    {item}
-                  </li>))}
-                </ul>
-                <a href="#contact" className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-3 rounded-lg font-semibold text-sm hover:bg-accent/90 transition-colors">
-                  Get Started <ArrowRight size={16} />
-                </a>
-              </div>
 
-              {/* Visual Card */}
-              <div className="flex-1 w-full">
-                <div className="bg-muted rounded-xl p-8 md:p-10 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-                  <service.icon className="text-accent/20 mb-6" size={80} />
-                  <h3 className="text-xl font-bold text-primary mb-3">
-                    Why Choose Us for {service.title}?
-                  </h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                      Industry-experienced team with proven track record
-                    </li>
-                    <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                      Agile methodology for faster delivery
-                    </li>
-                    <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                      24/7 support and maintenance
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>))}
+                  {/* Clean Footer Link */}
+                  <div className="px-6 pb-6 pt-0">
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                      <span className="inline-flex items-center gap-1.5 font-bold text-xs sm:text-sm text-accent group-hover:translate-x-1 transition-transform">
+                        <span>Explore Details</span>
+                        <ArrowRight size={15} />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
+
+
+      {/* High-Impact "Why Businesses Choose Neutonsoft" Component */}
+      <WhyChooseServices />
+
+      {/* Reusable Home-style FAQ Section powered by props & services-data.js */}
+      <FaqSection
+        badge="SERVICES FAQ"
+        titlePrefix="Frequently Asked"
+        titleHighlight="Services Questions"
+        description="Everything you need to know about our custom engineering services, team onboarding velocity, code ownership, and 24/7 SLA maintenance."
+        items={servicesFaqsData}
+        id="services-faq"
+      />
+
+      {/* Direct Call to Actions */}
       <CTASection />
       <ContactSection />
       <Footer />
-    </div>);
+    </div>
+  );
 };
+
 export default Services;

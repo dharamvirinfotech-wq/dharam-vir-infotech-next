@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
 import { caseStudiesApi } from "@/lib/api";
 import { Link } from "@/lib/router-compat";
+import { FALLBACK_PROJECTS, PORTFOLIO_HERO_DATA } from "@/utils/portfolioData";
 import {
   ArrowRight,
   ExternalLink,
@@ -14,6 +15,8 @@ import {
   Layers,
   ChevronDown,
 } from "lucide-react";
+import PortfolioHeroShowcase from "@/components/PortfolioHeroShowcase";
+import ProductsMarqueeStrip from "@/components/ProductsMarqueeStrip";
 
 // Standard Industry & Brand Icons from react-icons
 import {
@@ -127,8 +130,18 @@ const PortfolioView = () => {
   useEffect(() => {
     caseStudiesApi
       .list()
-      .then((d) => setProjects(d.case_studies || []))
-      .catch((err) => console.error("Portfolio fetch error:", err))
+      .then((d) => {
+        if (Array.isArray(d?.case_studies) && d.case_studies.length > 0) {
+          setProjects(d.case_studies);
+        } else {
+          // Backend returned empty or invalid data, fallback to static utils data
+          setProjects(FALLBACK_PROJECTS);
+        }
+      })
+      .catch((err) => {
+        console.warn("Portfolio API error, falling back to local utils data:", err);
+        setProjects(FALLBACK_PROJECTS);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -158,8 +171,16 @@ const PortfolioView = () => {
         breadcrumb="Portfolio"
       />
 
+      {/* ─── TOP MARQUEE: FLAGSHIP PRODUCTS & CLIENT PLATFORMS STRIP (Infinite Smooth Side Scroll, Pause on Hover) ─── */}
+      <ProductsMarqueeStrip
+        title="OUR FLAGSHIP SOFTWARE PRODUCTS & TRUSTED CLIENT PLATFORMS"
+      />
+
+      {/* ─── HERO INTRO: DELIVERING DIGITAL SOLUTIONS THAT CREATE BUSINESS IMPACT (Modular Component with Data Props) ─── */}
+      <PortfolioHeroShowcase data={PORTFOLIO_HERO_DATA} />
+
       {/* ─── SECTION 1: FEATURED PROJECTS SHOWCASE (Cards with Custom DVI Accent & Mockups) ─── */}
-      <section className="py-16 md:py-20">
+      <section className="py-12 md:py-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <h2 className="text-2xl sm:text-3xl font-black text-primary uppercase tracking-wider">

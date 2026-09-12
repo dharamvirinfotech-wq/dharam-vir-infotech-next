@@ -20,7 +20,7 @@ const sidebarLinks = [
   { label: "Applications", icon: FileText, href: "/admin/job-applications" },
   { label: "Unique Visitors", icon: Globe, href: "/admin/visitors" },
   { label: "Inquiry / Leads / Clients", icon: Mail, href: "/admin/inquiries" },
-  { label: "Case Studies", icon: BookOpen, href: "/admin/case-studies" },
+  { label: "Case Studies & Portfolio", icon: BookOpen, href: "/admin/portfolio" },
   { label: "Company Developers", icon: Users, href: "/admin/developers" },
   { label: "Users", icon: Users, href: "/admin/users" },
   { label: "Roles", icon: ShieldCheck, href: "/admin/roles" },

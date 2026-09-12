@@ -17,6 +17,35 @@ const parseJSON = (val, fallback = []) => {
 /**
  * Transforms a raw DB row into the API shape consumed by the frontend.
  */
+// ─── Multer setup for Case Study Cover & Gallery Images ─────────────────────
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+
+const uploadDir = path.join(__dirname, '../../uploads/portfolio');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    cb(null, `cover_${Date.now()}_${safeName}${ext}`);
+  },
+});
+
+const caseStudyUpload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.png', '.jpg', '.jpeg', '.webp', '.svg'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    allowed.includes(ext)
+      ? cb(null, true)
+      : cb(new Error('Only PNG, JPG, JPEG, WEBP, and SVG image files are allowed.'));
+  },
+});
+
 const format = (row) => ({
   ...row,
   technologies:         parseJSON(row.technologies),
@@ -26,6 +55,11 @@ const format = (row) => ({
   gallery:              parseJSON(row.gallery),
   faqs:                 parseJSON(row.faqs),
   key_highlights:       parseJSON(row.key_highlights),
+  key_features:         parseJSON(row.key_features),
+  roi_metrics:          parseJSON(row.roi_metrics),
+  what_they_gained:     parseJSON(row.what_they_gained),
+  approach:             row.approach || '',
+  overview:             row.overview || '',
   architecture_details: row.architecture_details || '',
   featured:             !!row.featured,
 });
@@ -96,7 +130,8 @@ const create = async (data) => {
     slug, title, subtitle = '', client_name = '', industry = '',
     duration = '', team_size = '', technologies, services,
     challenge = '', solution = '', results = '', architecture_details = '',
-    cover_image = '', live_url = '', gallery, metrics, faqs, key_highlights,
+    approach = '', overview = '', roi_metrics, what_they_gained,
+    cover_image = '', live_url = '', gallery, metrics, faqs, key_highlights, key_features,
     tags, status = 'draft', featured = false, sort_order = 0,
   } = data;
 
@@ -104,15 +139,17 @@ const create = async (data) => {
     `INSERT INTO case_studies
        (slug, title, subtitle, client_name, industry, duration, team_size,
         technologies, services, challenge, solution, architecture_details,
-        results, cover_image, live_url, gallery, metrics, faqs, key_highlights,
+        approach, overview, roi_metrics, what_they_gained,
+        results, cover_image, live_url, gallery, metrics, faqs, key_highlights, key_features,
         tags, status, featured, sort_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       slug, title, subtitle, client_name, industry, duration, team_size,
       toJSON(technologies), toJSON(services),
       challenge, solution, architecture_details,
+      approach, overview, toJSON(roi_metrics), toJSON(what_they_gained),
       results, cover_image, live_url,
-      toJSON(gallery), toJSON(metrics), toJSON(faqs), toJSON(key_highlights),
+      toJSON(gallery), toJSON(metrics), toJSON(faqs), toJSON(key_highlights), toJSON(key_features),
       toJSON(tags), status, featured ? 1 : 0, sort_order,
     ]
   );
@@ -132,7 +169,8 @@ const update = async (id, data) => {
     slug, title, subtitle = '', client_name = '', industry = '',
     duration = '', team_size = '', technologies, services,
     challenge = '', solution = '', results = '', architecture_details = '',
-    cover_image = '', live_url = '', gallery, metrics, faqs, key_highlights,
+    approach = '', overview = '', roi_metrics, what_they_gained,
+    cover_image = '', live_url = '', gallery, metrics, faqs, key_highlights, key_features,
     tags, status = 'draft', featured = false, sort_order = 0,
   } = data;
 
@@ -140,16 +178,18 @@ const update = async (id, data) => {
     `UPDATE case_studies SET
        slug = ?, title = ?, subtitle = ?, client_name = ?, industry = ?,
        duration = ?, team_size = ?, technologies = ?, services = ?,
-       challenge = ?, solution = ?, architecture_details = ?, results = ?,
-       cover_image = ?, live_url = ?, gallery = ?, metrics = ?, faqs = ?,
-       key_highlights = ?, tags = ?, status = ?, featured = ?, sort_order = ?
+       challenge = ?, solution = ?, architecture_details = ?,
+       approach = ?, overview = ?, roi_metrics = ?, what_they_gained = ?,
+       results = ?, cover_image = ?, live_url = ?, gallery = ?, metrics = ?, faqs = ?,
+       key_highlights = ?, key_features = ?, tags = ?, status = ?, featured = ?, sort_order = ?
      WHERE id = ?`,
     [
       slug, title, subtitle, client_name, industry, duration, team_size,
       toJSON(technologies), toJSON(services),
-      challenge, solution, architecture_details, results,
-      cover_image, live_url,
-      toJSON(gallery), toJSON(metrics), toJSON(faqs), toJSON(key_highlights),
+      challenge, solution, architecture_details,
+      approach, overview, toJSON(roi_metrics), toJSON(what_they_gained),
+      results, cover_image, live_url,
+      toJSON(gallery), toJSON(metrics), toJSON(faqs), toJSON(key_highlights), toJSON(key_features),
       toJSON(tags), status, featured ? 1 : 0, sort_order,
       id,
     ]
@@ -170,6 +210,7 @@ const remove = async (id) => {
 };
 
 module.exports = {
+  caseStudyUpload,
   listPublished,
   getBySlug,
   listAll,
@@ -177,3 +218,4 @@ module.exports = {
   update,
   remove,
 };
+

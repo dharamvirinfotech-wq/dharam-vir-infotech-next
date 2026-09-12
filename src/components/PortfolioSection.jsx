@@ -22,6 +22,8 @@ const itemVariants = {
 };
 
 const PortfolioSection = ({ items = homeFeaturedProjects }) => {
+  const safeItems = Array.isArray(items) && items.length > 0 ? items : homeFeaturedProjects;
+
   return (
     <section id="portfolio" className="py-10 sm:py-12 md:py-14 bg-backgrounds relative overflow-hidden">
       {/* Background Decorative Gradient Light */}
@@ -54,7 +56,7 @@ const PortfolioSection = ({ items = homeFeaturedProjects }) => {
           viewport={{ once: true, margin: "-40px" }}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          {items.map((project, idx) => (
+          {safeItems.map((project, idx) => (
             <motion.div
               key={idx}
               variants={itemVariants}
@@ -64,7 +66,7 @@ const PortfolioSection = ({ items = homeFeaturedProjects }) => {
                 {/* Category & Arrow Badge */}
                 <div className="flex items-center justify-between gap-4 mb-4">
                   <span className="text-xs font-mono font-bold uppercase tracking-wider text-accent bg-accent/10 px-3 py-1 rounded-full border border-accent/20">
-                    {project.category}
+                    {project.category || project.industry || "Software & Tools"}
                   </span>
                   <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-primary group-hover:bg-accent group-hover:text-white transition-colors duration-300">
                     <ArrowUpRight size={16} />
@@ -78,16 +80,16 @@ const PortfolioSection = ({ items = homeFeaturedProjects }) => {
 
                 {/* Description */}
                 <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed mb-6">
-                  {project.desc}
+                  {project.desc || project.subtitle || project.challenge}
                 </p>
               </div>
 
               {/* Tags and Link */}
               <div>
                 <div className="flex flex-wrap gap-2 pt-4 border-t border-border/40 mb-4">
-                  {project.tags.map((tag) => (
+                  {(project.tags || project.technologies || []).map((tag, tIdx) => (
                     <span
-                      key={tag}
+                      key={tIdx}
                       className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-secondary text-foreground/80 border border-border/40"
                     >
                       {tag}
@@ -96,7 +98,7 @@ const PortfolioSection = ({ items = homeFeaturedProjects }) => {
                 </div>
 
                 <Link
-                  to={project.link}
+                  to={project.link || (project.slug ? `/portfolio/${project.slug}` : "/portfolio")}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-primary dark:text-slate-200 group-hover:text-accent transition-colors"
                 >
                   <span>Explore Case Study</span>

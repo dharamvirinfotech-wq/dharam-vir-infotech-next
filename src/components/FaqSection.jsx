@@ -32,7 +32,11 @@ const FaqSection = ({
   defaultOpenId,
   id = "faq",
 }) => {
-  const [openId, setOpenId] = useState(defaultOpenId !== undefined ? defaultOpenId : (items?.[0]?.id || null));
+  const [openId, setOpenId] = useState(
+    defaultOpenId !== undefined
+      ? defaultOpenId
+      : (items?.[0]?.id || (items?.[0] ? "faq-0" : null))
+  );
 
   const toggleFaq = (faqId) => {
     setOpenId(openId === faqId ? null : faqId);
@@ -62,11 +66,12 @@ const FaqSection = ({
           viewport={{ once: true, margin: "-40px" }}
           className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start max-w-6xl mx-auto"
         >
-          {items.map((faq) => {
-            const isOpen = openId === faq.id;
+          {items.map((faq, index) => {
+            const faqKey = faq.id || `faq-${index}`;
+            const isOpen = openId === faqKey;
             return (
               <motion.div
-                key={faq.id}
+                key={faqKey}
                 variants={itemVariants}
                 className={`group rounded-2xl border transition-all duration-300 bg-card overflow-hidden ${isOpen
                     ? "border-accent/50 shadow-md shadow-accent/5 ring-1 ring-accent/20"
@@ -75,7 +80,7 @@ const FaqSection = ({
               >
                 <button
                   type="button"
-                  onClick={() => toggleFaq(faq.id)}
+                  onClick={() => toggleFaq(faqKey)}
                   className="w-full p-5 sm:p-6 text-left flex items-start justify-between gap-4 font-display font-bold text-primary dark:text-white text-sm sm:text-base leading-snug group-hover:text-accent transition-colors cursor-pointer"
                 >
                   <span className="pr-2">{faq.question}</span>
