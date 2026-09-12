@@ -2,7 +2,6 @@ name: Deploy Next.js App to cPanel
 
 on:
   workflow_dispatch:
-
   push:
     branches:
       - main
@@ -46,8 +45,6 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
-            **/.github/**
             **/node_modules/**
             .env
             .env.*
-```
