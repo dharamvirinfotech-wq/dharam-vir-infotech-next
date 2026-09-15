@@ -1,10 +1,11 @@
-name: Deploy Next.js App to cPanel
+name: Deploy Next.js App to cPanel Shared Hosting
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -12,39 +13,74 @@ jobs:
 
     steps:
 
+      # --------------------------------------------------
+      # 1. Checkout source code
+      # --------------------------------------------------
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+
+      # --------------------------------------------------
+      # 2. Setup Node.js
+      # --------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
 
+
+      # --------------------------------------------------
+      # 3. Install dependencies
+      # --------------------------------------------------
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Next.js
+
+      # --------------------------------------------------
+      # 4. Build Next.js production application
+      # --------------------------------------------------
+      - name: Build Next.js Application
         run: npm run build
 
+
+      # --------------------------------------------------
+      # 5. Verify production build
+      # --------------------------------------------------
       - name: Verify Next.js Build
         run: |
-          echo "Checking .next directory..."
-          ls -la
+          if [ ! -d ".next" ]; then
+            echo "ERROR: .next directory was not created."
+            exit 1
+          fi
+
+          if [ ! -f ".next/BUILD_ID" ]; then
+            echo "ERROR: .next/BUILD_ID was not found."
+            exit 1
+          fi
+
+          echo "Next.js production build created successfully."
           ls -la .next
 
+
+      # --------------------------------------------------
+      # 6. Deploy to cPanel via FTP
+      # --------------------------------------------------
       - name: Deploy to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          local-dir: ./
-          server-dir: /dharamvirinfotech.com/
+
+          # Your cPanel application directory
+          server-dir: /home/qbzryevr/dharamvirinfotech.com/
+
+          # Do NOT exclude .next
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
-            .env
-            .env.*
+            **/.env
+            **/.env.*
+            **/npm-debug.log*
