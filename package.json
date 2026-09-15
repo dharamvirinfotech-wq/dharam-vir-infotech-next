@@ -1,12 +1,13 @@
 {
-  "name": "dharmvir-spark-next",
+  "homepage": "https://dharamvirinfotech.com/",
+  "name": "Dharam Vir InfoTech",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
     "lint": "next lint"
   },
   "dependencies": {
