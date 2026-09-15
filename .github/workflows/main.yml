@@ -13,24 +13,71 @@ jobs:
 
     steps:
 
+      # ==========================================
+      # Checkout
+      # ==========================================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+
+      # ==========================================
+      # Node.js
+      # ==========================================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
+
+      # ==========================================
+      # Install
+      # ==========================================
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Next.js
-        run: npm run build
 
+      # ==========================================
+      # Verify Config
+      # ==========================================
+      - name: Verify Next.js Config
+        run: |
+          echo "================================"
+          echo "Next.js configuration files"
+          echo "================================"
+
+          find . -maxdepth 1 -name "next.config.*" -print
+
+          echo ""
+          echo "================================"
+          echo "next.config.cjs"
+          echo "================================"
+
+          if [ ! -f "next.config.cjs" ]; then
+            echo "ERROR: next.config.cjs not found!"
+            exit 1
+          fi
+
+          cat next.config.cjs
+
+
+      # ==========================================
+      # Build
+      # ==========================================
+      - name: Build Next.js
+        run: |
+          rm -rf .next
+          npm run build
+
+
+      # ==========================================
+      # Verify Build
+      # ==========================================
       - name: Verify Standalone Build
         run: |
-          echo "Checking Next.js build..."
+          echo "================================"
+          echo "Checking Next.js build"
+          echo "================================"
 
           if [ ! -d ".next" ]; then
             echo "ERROR: .next directory does not exist."
@@ -42,24 +89,31 @@ jobs:
             exit 1
           fi
 
-          if [ ! -d ".next/standalone" ]; then
-            echo "ERROR: .next/standalone directory does not exist."
-            echo "Check next.config.js and make sure:"
-            echo "output: 'standalone'"
-            exit 1
-          fi
-
-          echo "================================"
-          echo "Next.js build successful"
-          echo "================================"
-
           echo "BUILD_ID:"
           cat .next/BUILD_ID
 
           echo ""
-          echo "Standalone files:"
+          echo "Checking standalone directory..."
+
+          if [ ! -d ".next/standalone" ]; then
+            echo "ERROR: .next/standalone directory does not exist."
+
+            echo ""
+            echo "Contents of .next:"
+            find .next -maxdepth 3 -type d | sort
+
+            exit 1
+          fi
+
+          echo ""
+          echo "SUCCESS: Standalone build exists."
+
           ls -la .next/standalone
 
+
+      # ==========================================
+      # Prepare Deployment
+      # ==========================================
       - name: Prepare Standalone Deployment
         run: |
           rm -rf deploy
@@ -74,7 +128,7 @@ jobs:
           mkdir -p deploy/.next/static
           cp -r .next/static/. deploy/.next/static/
 
-          echo "Copying public directory..."
+          echo "Copying public files..."
 
           if [ -d "public" ]; then
             cp -r public deploy/public
@@ -82,20 +136,24 @@ jobs:
 
           echo ""
           echo "================================"
-          echo "Deployment prepared"
+          echo "Deployment Information"
           echo "================================"
 
           echo "Deployment size:"
           du -sh deploy
 
           echo ""
-          echo "Deployment files:"
+          echo "File count:"
           find deploy -type f | wc -l
 
           echo ""
-          echo "Deployment structure:"
+          echo "Deployment directories:"
           find deploy -maxdepth 2 -type d | sort
 
+
+      # ==========================================
+      # FTP Deployment
+      # ==========================================
       - name: Deploy to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
