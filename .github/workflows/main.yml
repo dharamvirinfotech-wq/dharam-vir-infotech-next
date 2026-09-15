@@ -13,40 +13,21 @@ jobs:
 
     steps:
 
-      # ============================================
-      # 1. Checkout repository
-      # ============================================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-
-      # ============================================
-      # 2. Setup Node.js
-      # ============================================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
-
-      # ============================================
-      # 3. Install dependencies
-      # ============================================
       - name: Install Dependencies
         run: npm ci
 
-
-      # ============================================
-      # 4. Build Next.js
-      # ============================================
       - name: Build Next.js
         run: npm run build
 
-
-      # ============================================
-      # 5. Verify standalone build
-      # ============================================
       - name: Verify Standalone Build
         run: |
           echo "Checking Next.js build..."
@@ -61,29 +42,24 @@ jobs:
             exit 1
           fi
 
-          echo "BUILD_ID:"
-          cat .next/BUILD_ID
-
-          echo ""
-          echo "Checking standalone directory..."
-
           if [ ! -d ".next/standalone" ]; then
-            echo "ERROR: .next/standalone does not exist."
-            echo ""
-            echo "Make sure next.config.js contains:"
+            echo "ERROR: .next/standalone directory does not exist."
+            echo "Check next.config.js and make sure:"
             echo "output: 'standalone'"
             exit 1
           fi
 
-          echo ""
-          echo "Standalone build found successfully."
+          echo "================================"
+          echo "Next.js build successful"
+          echo "================================"
 
+          echo "BUILD_ID:"
+          cat .next/BUILD_ID
+
+          echo ""
+          echo "Standalone files:"
           ls -la .next/standalone
 
-
-      # ============================================
-      # 6. Prepare deployment
-      # ============================================
       - name: Prepare Standalone Deployment
         run: |
           rm -rf deploy
@@ -93,7 +69,7 @@ jobs:
 
           cp -r .next/standalone/. deploy/
 
-          echo "Copying Next.js static files..."
+          echo "Copying static files..."
 
           mkdir -p deploy/.next/static
           cp -r .next/static/. deploy/.next/static/
@@ -113,17 +89,13 @@ jobs:
           du -sh deploy
 
           echo ""
-          echo "Deployment file count:"
+          echo "Deployment files:"
           find deploy -type f | wc -l
 
           echo ""
           echo "Deployment structure:"
           find deploy -maxdepth 2 -type d | sort
 
-
-      # ============================================
-      # 7. Deploy to cPanel
-      # ============================================
       - name: Deploy to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
