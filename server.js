@@ -1,35 +1,32 @@
-import http from "http";
-import next from "next";
+const { createServer } = require("http");
+const next = require("next");
 
-const port = Number(process.env.PORT) || 3010;
-const hostname = process.env.HOSTNAME || "0.0.0.0";
+const port = process.env.PORT || 3000;
+const hostname = "0.0.0.0";
 
 const app = next({
   dev: false,
   hostname,
-  port,
+  port
 });
 
 const handle = app.getRequestHandler();
 
 app.prepare()
   .then(() => {
-    const server = http.createServer((req, res) => {
-      handle(req, res);
-    });
-
-    server.listen(port, hostname, () => {
-      console.log(
-        `Next.js application running on ${hostname}:${port}`
-      );
-    });
-
-    server.on("error", (error) => {
-      console.error("Server error:", error);
-      process.exit(1);
+    createServer(async (req, res) => {
+      try {
+        await handle(req, res);
+      } catch (err) {
+        console.error(err);
+        res.statusCode = 500;
+        res.end("Internal Server Error");
+      }
+    }).listen(port, hostname, () => {
+      console.log(`> Ready on http://${hostname}:${port}`);
     });
   })
-  .catch((error) => {
-    console.error("Next.js startup error:", error);
+  .catch((err) => {
+    console.error("Next.js startup error:", err);
     process.exit(1);
   });
